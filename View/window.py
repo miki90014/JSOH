@@ -22,28 +22,44 @@ class MainWindow(QMainWindow):
 
         main_layout = QGridLayout()
 
-        right_side_menu = QVBoxLayout()
+        self.right_side_menu = QVBoxLayout()
 
-        right_side_menu.addWidget(QPushButton('Przegląd zaplanowanych hospitacji'))
-        right_side_menu.addWidget(QPushButton('Wgląd do wyników hospitacji'))
-        right_side_menu.addWidget(QPushButton('Hospitacje'))
-        right_side_menu.addWidget(QPushButton('Ocena pracowników'))
+        self.right_side_menu_button_list = [QPushButton('Przegląd zaplanowanych hospitacji'), QPushButton('Hospitacje'),
+                                            QPushButton('Wgląd do wyników hospitacji'), QPushButton('Ocena pracowników')]
 
-        widget = QComboBox()
-        widget.addItems(["Hospitowany", 'Hospitujący', 'Dziekan'])
+        for button in self.right_side_menu_button_list:
+            self.right_side_menu.addWidget(button)
 
-        main_layout.addLayout(right_side_menu, 1, 0)
-        main_layout.addWidget(QWidget(), 0, 1)
-        main_layout.addWidget(widget, 0, 2)
+        login_list = QComboBox()
+        login_list.addItems(["Hospitowany", 'Hospitujący', 'Dziekan'])
+        login_list.currentIndexChanged.connect(self.on_login_list_change)
+
+        frame = QFrame()
+        frame.setStyleSheet("border: 1px solid black")
+
+        empty_widget = QWidget()
+        empty_widget.setFixedSize(QSize(100, 10))
+
+        main_layout.addLayout(self.right_side_menu, 1, 0)
+        main_layout.addWidget(empty_widget, 0, 1)
+        main_layout.addWidget(login_list, 0, 2)
         main_layout.addWidget(QPushButton('Powiadomienia'), 0, 3)
         main_layout.addWidget(QPushButton('Wyloguj się'), 0, 4)
+        main_layout.addWidget(frame, 1, 1, 1, 4)
 
-        self.setFixedSize(QSize(900, 450))
+        self.setBaseSize(QSize(900, 450))
 
         widget = QWidget()
         widget.setLayout(main_layout)
 
         self.setCentralWidget(widget)
+
+    def on_login_list_change(self, value):
+        print("combobox changed", value)
+        if value == 1:
+            self.right_side_menu_button_list[0].hide()
+        if value == 0:
+            self.right_side_menu_button_list[0].show()
 
 
 if __name__ == '__main__':
