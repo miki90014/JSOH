@@ -1,10 +1,10 @@
-
 from datetime import date
-from random import randrange
+import numpy as np
 
 
 class ProtocolResult:
-    id = randrange(1, 100)
-    received_date = date.today()
-    accepted_date = date.today()
-    status = randrange(0, 4)
+    def __init__(self):
+        self.id = np.random.randint(100)+1
+        self.received_date = date.today()
+        self.accepted_date = date.today()
+        self.status = np.random.randint(0, 4)

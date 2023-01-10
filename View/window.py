@@ -68,14 +68,15 @@ class MainWindow(QMainWindow):
             self.right_side_menu_button_list[0].hide()
         if value == 0:
             self.right_side_menu_button_list[0].show()
+
     def clear_in_frame_layout(self):
         for i in reversed(range(self.in_frame_layout.count())):
             self.in_frame_layout.itemAt(i).widget().setParent(None)
+
     def view_protocol_results(self):
         self.clear_in_frame_layout()
 
-        protocol_result_list = [ProtocolResult()]
-        protocol_result_list.append(ProtocolResult())
+        protocol_result_list = [ProtocolResult(), ProtocolResult()]
 
         frame = QFrame()
         frame.setStyleSheet("border: 1px solid black")
@@ -88,9 +89,9 @@ class MainWindow(QMainWindow):
 
         row = 1
         for result in protocol_result_list:
-            self.in_frame_layout.addWidget(QLabel(str(result.id)), row, 0)
-            self.in_frame_layout.addWidget(QLabel(str(result.received_date)), row, 1)
-            self.in_frame_layout.addWidget(QLabel(str(result.accepted_date)), row, 2)
+            self.in_frame_layout.addWidget(QLabel(str(result.id)))
+            self.in_frame_layout.addWidget(QLabel(str(result.received_date)))
+            self.in_frame_layout.addWidget(QLabel(str(result.accepted_date)))
             match str(result.status):
                 case '0':
                     self.in_frame_layout.addWidget(QLabel("Zaakceptowany"), row, 3)
