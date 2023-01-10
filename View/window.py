@@ -58,12 +58,11 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(widget)
 
-        #example of how connection will be working
+        # example of how connection will be working
         self.right_side_menu_button_list[2].clicked.connect(self.view_protocol_results)
         self.right_side_menu_button_list[1].clicked.connect(self.clear_in_frame_layout)
 
     def on_login_list_change(self, value):
-        print("combobox changed", value)
         if value == 1:
             self.right_side_menu_button_list[0].hide()
         if value == 0:
@@ -89,9 +88,9 @@ class MainWindow(QMainWindow):
 
         row = 1
         for result in protocol_result_list:
-            self.in_frame_layout.addWidget(QLabel(str(result.id)))
-            self.in_frame_layout.addWidget(QLabel(str(result.received_date)))
-            self.in_frame_layout.addWidget(QLabel(str(result.accepted_date)))
+            self.in_frame_layout.addWidget(QLabel(str(result.id)), row, 0)
+            self.in_frame_layout.addWidget(QLabel(str(result.received_date)), row, 1)
+            self.in_frame_layout.addWidget(QLabel(str(result.accepted_date)), row, 2)
             match str(result.status):
                 case '0':
                     self.in_frame_layout.addWidget(QLabel("Zaakceptowany"), row, 3)
