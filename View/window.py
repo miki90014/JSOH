@@ -25,8 +25,13 @@ class MainWindow(QMainWindow):
 
         self.right_side_menu = QVBoxLayout()
 
-        self.right_side_menu_button_list = [QPushButton('Przegląd zaplanowanych hospitacji'), QPushButton('Hospitacje'),
-                                            QPushButton('Wgląd do wyników hospitacji'), QPushButton('Ocena pracowników')]
+        self.right_side_menu_button_list = [QPushButton('Przegląd zaplanowanych hospitacji'),
+                                            QPushButton('Hospitacje'),
+                                            QPushButton('Wgląd do wyników hospitacji'),
+                                            QPushButton('Ocena pracowników'),
+                                            QPushButton('Wypełnij protokół')]
+
+        self.login_as_hospitowany()
 
         self.in_frame_layout = QGridLayout()
 
@@ -61,11 +66,50 @@ class MainWindow(QMainWindow):
         # example of how connection will be working
         self.right_side_menu_button_list[2].clicked.connect(self.view_protocol_results)
         self.right_side_menu_button_list[1].clicked.connect(self.clear_in_frame_layout)
+        self.right_side_menu_button_list[4].clicked.connect(self.fill_protocol)
+
+    def fill_protocol(self):
+        self.clear_in_frame_layout()
+        for button in self.right_side_menu_button_list:
+            button.hide()
+
+        frame = QFrame()
+        frame.setStyleSheet("border: 1px solid black")
+
+        self.in_frame_layout.addWidget(frame, 0, 0, 4, 5)
+        self.in_frame_layout.addWidget(QLabel("Ocena formalna zajęć:"), 0, 0)
+
+        list_of_points = ['Punktualność zajęć', 'Sprawdzenie obecności studentów', 'Wyposażenie sali',
+                          'Treść zgodna z kartą przedmiotu']
+
+        radio_buttons = [QRadioButton('Tak'), QRadioButton('Nie'), QRadioButton('Nie dotyczy:')]
+        radio_buttons_layout = QHBoxLayout()
+
+        for button in radio_buttons:
+            radio_buttons_layout.addWidget(button)
+
+        for row, point in enumerate(list_of_points):
+            self.in_frame_layout.addWidget(QLabel(point + ':'), row + 1, 0)
+            self.in_frame_layout.addLayout(radio_buttons_layout, row + 1, 1, 1, 3)
+
+    def login_as_hospitowany(self):
+        for index, button in enumerate(self.right_side_menu_button_list):
+            button.hide()
+            if index == 2:
+                button.show()
+
+    def login_as_hospitujacy(self):
+        for index, button in enumerate(self.right_side_menu_button_list):
+            button.hide()
+            if index in [0, 1, 2, 4]:
+                button.show()
 
     def on_login_list_change(self, value):
-        if value == 1:
-            self.right_side_menu_button_list[0].hide()
         if value == 0:
+            self.login_as_hospitowany()
+        if value == 1:
+            self.login_as_hospitujacy()
+        if value == 2:
             self.right_side_menu_button_list[0].show()
 
     def clear_in_frame_layout(self):
