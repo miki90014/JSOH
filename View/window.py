@@ -65,15 +65,16 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(widget)
 
         # example of how connection will be working
+        # example of how connection will be working
         self.right_side_menu_button_list[2].clicked.connect(self.view_protocol_results)
         self.right_side_menu_button_list[1].clicked.connect(self.clear_in_frame_layout)
 
     def on_login_list_change(self, value):
-        print("combobox changed", value)
         if value == 1:
             self.right_side_menu_button_list[0].hide()
         if value == 0:
             self.right_side_menu_button_list[0].show()
+
 
     def clear_in_frame_layout(self):
         for i in reversed(range(self.in_frame_layout.count())):
