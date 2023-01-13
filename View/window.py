@@ -1,8 +1,12 @@
+import copy
 import sys
-from PyQt6.QtCore import QSize, Qt
+from functools import partial
+
+from PyQt6.QtCore import QSize, Qt, QDir
 from PyQt6.QtWidgets import *
 from PyQt6.QtGui import QColor, QPalette
-from Model.example_data import ProtocolResult
+from Model.example_data import ProtocolResult, ProtocolResultList, printResults, \
+    send_accepted_protocol
 
 
 class Color(QWidget):
@@ -19,7 +23,9 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("JSOH")
+        self.setWindowTitle('JSOH')
+        # for now
+        self.protocol_result_list = ProtocolResultList(7)
 
         main_layout = QGridLayout()
 
@@ -34,11 +40,11 @@ class MainWindow(QMainWindow):
             self.right_side_menu.addWidget(button)
 
         login_list = QComboBox()
-        login_list.addItems(["Hospitowany", 'Hospitujący', 'Dziekan'])
+        login_list.addItems(['Hospitowany', 'Hospitujący', 'Dziekan'])
         login_list.currentIndexChanged.connect(self.on_login_list_change)
 
         frame = QFrame()
-        frame.setStyleSheet("border: 1px solid black")
+        frame.setStyleSheet('border: 1px solid black')
 
         empty_widget = QWidget()
         empty_widget.setFixedSize(QSize(100, 10))
@@ -58,7 +64,7 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(widget)
 
-        #example of how connection will be working
+        # example of how connection will be working
         self.right_side_menu_button_list[2].clicked.connect(self.view_protocol_results)
         self.right_side_menu_button_list[1].clicked.connect(self.clear_in_frame_layout)
 
@@ -68,37 +74,109 @@ class MainWindow(QMainWindow):
             self.right_side_menu_button_list[0].hide()
         if value == 0:
             self.right_side_menu_button_list[0].show()
+
     def clear_in_frame_layout(self):
         for i in reversed(range(self.in_frame_layout.count())):
             self.in_frame_layout.itemAt(i).widget().setParent(None)
+        self.setBaseSize(QSize(900, 450))
+
     def view_protocol_results(self):
         self.clear_in_frame_layout()
 
-        protocol_result_list = [ProtocolResult()]
-        protocol_result_list.append(ProtocolResult())
+        button_list = []
 
         frame = QFrame()
-        frame.setStyleSheet("border: 1px solid black")
+        frame.setStyleSheet('border: 1px solid black')
 
         self.in_frame_layout.addWidget(frame, 0, 0, 1, 5)
-        self.in_frame_layout.addWidget(QLabel("nr Protokołu"), 0, 0)
-        self.in_frame_layout.addWidget(QLabel("Data otrzymania"), 0, 1)
-        self.in_frame_layout.addWidget(QLabel("Data wystawienia"), 0, 2)
-        self.in_frame_layout.addWidget(QLabel("Status"), 0, 3)
+        self.in_frame_layout.addWidget(QLabel('nr Protokołu'), 0, 0)
+        self.in_frame_layout.addWidget(QLabel('Data otrzymania'), 0, 1)
+        self.in_frame_layout.addWidget(QLabel('Data wystawienia'), 0, 2)
+        self.in_frame_layout.addWidget(QLabel('Status'), 0, 3)
 
         row = 1
-        for result in protocol_result_list:
+        for i in range(self.protocol_result_list.length):
+            button_list.append(QPushButton('Wgląd'))
+
+        for result in self.protocol_result_list.list:
             self.in_frame_layout.addWidget(QLabel(str(result.id)), row, 0)
             self.in_frame_layout.addWidget(QLabel(str(result.received_date)), row, 1)
             self.in_frame_layout.addWidget(QLabel(str(result.accepted_date)), row, 2)
             match str(result.status):
                 case '0':
-                    self.in_frame_layout.addWidget(QLabel("Zaakceptowany"), row, 3)
+                    self.in_frame_layout.addWidget(QLabel('Zaakceptowany'), row, 3)
                 case '1':
-                    self.in_frame_layout.addWidget(QLabel("Do zaakceptowania"), row, 3)
+                    self.in_frame_layout.addWidget(QLabel('Do zaakceptowania'), row, 3)
                 case '2':
-                    self.in_frame_layout.addWidget(QLabel("W trakcie odwołania"), row, 3)
+                    self.in_frame_layout.addWidget(QLabel('W trakcie odwołania'), row, 3)
                 case '3':
-                    self.in_frame_layout.addWidget(QLabel("Protokół zaakceptowany po odwołaniu"), row, 3)
-            self.in_frame_layout.addWidget(QPushButton("Wgląd"), row, 4)
+                    self.in_frame_layout.addWidget(QLabel('Protokół zaakceptowany po odwołaniu'), row, 3)
+            #button_list[row-1].clicked.connect(lambda: self.view_specific_protocol(result))
+            button_list[row - 1].clicked.connect(partial(self.view_specific_protocol, result=result))
+            self.in_frame_layout.addWidget(button_list[row-1], row, 4)
             row += 1
+
+
+    def view_specific_protocol(self, result):
+        self.clear_in_frame_layout()
+        btn_back = QPushButton("Wróć do listy")
+        btn_back.clicked.connect(self.view_protocol_results)
+
+        self.in_frame_layout.addWidget(QLabel('Protokół hospitacji nr: '), 0, 0)
+        self.in_frame_layout.addWidget(QLabel(str(result.id)), 0, 1)
+        self.in_frame_layout.addWidget(btn_back, 0,2)
+
+        if(result.status==1):
+            answerResults = QPushButton('Odpowiedz na wyniki')
+            answerResults.clicked.connect(lambda: self.answer_results(result))
+            self.in_frame_layout.addWidget(answerResults, 0,3)
+        else:
+            alert = QMessageBox()
+            alert.setText('Wyświetlany protokół zotsał zaakceptowany lub jest w trakcie odwołania. \nNie możesz podjąć żadnych akcji.')
+            alert.exec()
+
+    def answer_results(self, result):
+        self.clear_in_frame_layout()
+        btn_accept = QPushButton("Zaakceptuj")
+        btn_cancellation = QPushButton("Napisz odwołanie")
+        self.in_frame_layout.addWidget(QLabel("Czy chcesz zaakceptować wyniki?"), 0,0,2, 1)
+        self.in_frame_layout.addWidget(btn_accept, 1,0)
+        self.in_frame_layout.addWidget(btn_cancellation, 1, 1)
+        btn_accept.clicked.connect(partial(self.accept_results, result=result))
+        btn_cancellation.clicked.connect(partial(self.write_cancellation_results, result=result))
+
+    def accept_results(self, result):
+        self.clear_in_frame_layout()
+        btn_print = QPushButton("Wydrukuj protokół")
+        textEditor = QTextEdit()
+        btn_upload = QPushButton("Załącz plik")
+        btn_accept = QPushButton("Wyślij")
+        self.in_frame_layout.addWidget(btn_print, 1, 0)
+        self.in_frame_layout.addWidget(btn_upload, 1, 1)
+        self.in_frame_layout.addWidget(textEditor, 0, 0, 1, 3)
+        btn_print.clicked.connect(partial(printResults, result=result))
+        btn_upload.clicked.connect(partial(self.get_text_file, textEditor=textEditor, btn_accept=btn_accept))
+
+    def send_accepted_results(self, file_name):
+        self.clear_in_frame_layout()
+        send_accepted_protocol(file_name)
+
+    def get_text_file(self, textEditor, btn_accept):
+        file_name, _ = QFileDialog.getOpenFileName(self, 'Open Txt File', r"Protocols",
+                                                   "Text files (*.txt)")
+        if(file_name.endswith('.txt')):
+            with open(file_name, 'r') as f:
+                data = f.read()
+                textEditor.setPlainText(data)
+                f.close()
+            self.in_frame_layout.addWidget(btn_accept, 1, 2)
+            btn_accept.clicked.connect(partial(self.send_accepted_results, file_name=file_name))
+        else:
+            pass
+
+
+
+    def write_cancellation_results(self, result):
+        self.clear_in_frame_layout()
+
+
