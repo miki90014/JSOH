@@ -19,6 +19,19 @@ class Color(QWidget):
         self.setPalette(palette)
 
 
+def create_yes_no_radio_buttons():
+    yes = QRadioButton('Tak')
+    no = QRadioButton('Nie')
+    not_included = QRadioButton('Nie dotyczy')
+    group1 = QHBoxLayout()
+    group = QGroupBox()
+    group1.addWidget(yes)
+    group1.addWidget(no)
+    group1.addWidget(not_included)
+    group.setLayout(group1)
+    return group
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -35,6 +48,14 @@ class MainWindow(QMainWindow):
                                             QPushButton('Wgląd do wyników hospitacji'), QPushButton('Ocena pracowników')]
 
         self.in_frame_layout = QGridLayout()
+
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+
+        self.inner = QFrame(self.scroll_area)
+        self.inner.setLayout(self.in_frame_layout)
+
+        self.scroll_area.setWidget(self.inner)
 
         for button in self.right_side_menu_button_list:
             self.right_side_menu.addWidget(button)
@@ -55,9 +76,11 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(QPushButton('Powiadomienia'), 0, 3)
         main_layout.addWidget(QPushButton('Wyloguj się'), 0, 4)
         main_layout.addWidget(frame, 1, 1, 1, 4)
-        main_layout.addLayout(self.in_frame_layout, 1, 1, 1, 4)
+        main_layout.addWidget(self.scroll_area, 1, 1, 1, 4)
 
         self.setBaseSize(QSize(900, 450))
+        self.setFixedWidth(1000)
+        self.setFixedHeight(300)
 
         widget = QWidget()
         widget.setLayout(main_layout)
@@ -67,7 +90,7 @@ class MainWindow(QMainWindow):
         # example of how connection will be working
         # example of how connection will be working
         self.right_side_menu_button_list[2].clicked.connect(self.view_protocol_results)
-        self.right_side_menu_button_list[1].clicked.connect(self.clear_in_frame_layout)
+        self.right_side_menu_button_list[1].clicked.connect(self.view_protocols_to_fill)
 
     def on_login_list_change(self, value):
         if value == 1:
@@ -175,9 +198,90 @@ class MainWindow(QMainWindow):
         else:
             pass
 
-
-
     def write_cancellation_results(self, result):
         self.clear_in_frame_layout()
 
+    def view_protocols_to_fill(self):
+        self.clear_in_frame_layout()
 
+        button_list = []
+
+        frame = QFrame()
+        frame.setStyleSheet('border: 1px solid black')
+
+        self.in_frame_layout.addWidget(frame, 0, 0, 1, 5)
+        self.in_frame_layout.addWidget(QLabel('nr Protokołu'), 0, 0)
+        self.in_frame_layout.addWidget(QLabel('Prowadzący'), 0, 1)
+        self.in_frame_layout.addWidget(QLabel('Data hospitacji'), 0, 2)
+
+        row = 1
+        for i in range(self.protocol_result_list.length):
+            button_list.append(QPushButton('Wypełnij'))
+
+        for result in self.protocol_result_list.list:
+            self.in_frame_layout.addWidget(QLabel(str(result.id)), row, 0)
+            self.in_frame_layout.addWidget(QLabel("Jan Kowalski"), row, 1)
+            self.in_frame_layout.addWidget(QLabel('2023-01-14'), row, 2)
+            self.in_frame_layout.addWidget(QLabel('Do Wypełnienia'), row, 3)
+            # button_list[row-1].clicked.connect(lambda: self.view_specific_protocol(result))
+            button_list[row - 1].clicked.connect(lambda: self.fill_protocol(result))
+            self.in_frame_layout.addWidget(button_list[row - 1], row, 4)
+            row += 1
+
+    def fill_protocol(self, result):
+        self.clear_in_frame_layout()
+        btn_back = QPushButton("Wróć do listy")
+        btn_back.clicked.connect(self.view_protocols_to_fill)
+
+        self.in_frame_layout.addWidget(QLabel('Protokół hospitacji nr: '), 0, 0)
+        self.in_frame_layout.addWidget(QLabel(str(result.id)), 0, 1)
+        self.in_frame_layout.addWidget(btn_back, 0, 2)
+
+        # to be downloaded from database
+        basic_info = [QLabel(f'Prawadzący zajęcia/Jednostka organizacyjna {"Jan Kowalski"}'),
+                      QLabel(f'Nazwa kursu/kierunek studiów {"Projektowanie Oprogramowania"}'),
+                      QLabel(f'Kod kursu {"KRK-054"}'),
+                      QLabel(f'Forma dydaktyczna {""}'),
+                      QLabel(f'Sposób realizacji {"tradycyjny"}'),
+                      QLabel(f'Stopień i forma studiów {"I stopień"}'),
+                      QLabel(f'Semestr {str(5)}'),
+                      QLabel(f'Miejsce i termin zajęć {"Budynek D2, sala 152, wt 13:15-14:45"}'),
+                      QLabel(f'Srodowisko realizacji zajęć {"Nie dotyczy"}')]
+
+        row = 1
+        for info in basic_info:
+            self.in_frame_layout.addWidget(info, row, 0, 1, 2)
+            row += 1
+
+        empty_widget = QWidget()
+        empty_widget.setFixedSize(QSize(100, 25))
+
+        self.in_frame_layout.addWidget(empty_widget, row, 0)
+        row += 1
+
+        self.in_frame_layout.addWidget(QLabel('Ocena formalna zajęć:'), row, 0, 1, 2)
+        row += 1
+
+        empty_widget = QWidget()
+        empty_widget.setFixedSize(QSize(100, 25))
+
+        self.in_frame_layout.addWidget(empty_widget, row, 0)
+        row += 1
+
+        formal_mark = [QLabel('Punktualność zajęć: '),
+                       QLabel('Sprawdzenie obecności studentów: '),
+                       QLabel('Wyposażenie sali: '),
+                       QLabel('Weryfikacja czy prowadzący jest widziany i słyszany: '),
+                       QLabel('Treść zajęć zgodna z kartą przedmiotu: '),
+                       QLabel('Prowadzący umożliwia dostęp do informacji przez środku komunikacji elektronicznej: ')]
+
+        formal_mark_dict = {
+
+        }
+
+        for mark in formal_mark:
+            self.in_frame_layout.addWidget(mark, row, 0)
+            buttons = create_yes_no_radio_buttons()
+            formal_mark_dict[mark.text()] = buttons
+            self.in_frame_layout.addWidget(buttons, row, 1, 1, 2)
+            row += 1
