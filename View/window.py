@@ -88,7 +88,6 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(widget)
 
         # example of how connection will be working
-        # example of how connection will be working
         self.right_side_menu_button_list[2].clicked.connect(self.view_protocol_results)
         self.right_side_menu_button_list[1].clicked.connect(self.view_protocols_to_fill)
 
@@ -310,3 +309,68 @@ class MainWindow(QMainWindow):
                     print('ala')
                     delay.show()
                     delay_label.show()
+
+
+    def view_specific_protocol(self, result):
+        self.clear_in_frame_layout()
+        btn_back = QPushButton("Wróć do listy")
+        btn_back.clicked.connect(self.view_protocol_results)
+
+        self.in_frame_layout.addWidget(QLabel('Protokół hospitacji nr: '), 0, 0)
+        self.in_frame_layout.addWidget(QLabel(str(result.id)), 0, 1)
+        self.in_frame_layout.addWidget(btn_back, 0,2)
+
+        if(result.status==1):
+            answerResults = QPushButton('Odpowiedz na wyniki')
+            answerResults.clicked.connect(lambda: self.answer_results(result))
+            self.in_frame_layout.addWidget(answerResults, 0,3)
+        else:
+            alert = QMessageBox()
+            alert.setText('Wyświetlany protokół zotsał zaakceptowany lub jest w trakcie odwołania. \nNie możesz podjąć żadnych akcji.')
+            alert.exec()
+
+    def answer_results(self, result):
+        self.clear_in_frame_layout()
+        btn_accept = QPushButton("Zaakceptuj")
+        btn_cancellation = QPushButton("Napisz odwołanie")
+        self.in_frame_layout.addWidget(QLabel("Czy chcesz zaakceptować wyniki?"), 0,0,2, 1)
+        self.in_frame_layout.addWidget(btn_accept, 1,0)
+        self.in_frame_layout.addWidget(btn_cancellation, 1, 1)
+        btn_accept.clicked.connect(partial(self.accept_results, result=result))
+        btn_cancellation.clicked.connect(partial(self.write_cancellation_results, result=result))
+
+    def accept_results(self, result):
+        self.clear_in_frame_layout()
+        btn_print = QPushButton("Wydrukuj protokół")
+        textEditor = QTextEdit()
+        btn_upload = QPushButton("Załącz plik")
+        btn_accept = QPushButton("Wyślij")
+        self.in_frame_layout.addWidget(btn_print, 1, 0)
+        self.in_frame_layout.addWidget(btn_upload, 1, 1)
+        self.in_frame_layout.addWidget(textEditor, 0, 0, 1, 3)
+        btn_print.clicked.connect(partial(printResults, result=result))
+        btn_upload.clicked.connect(partial(self.get_text_file, textEditor=textEditor, btn_accept=btn_accept))
+
+    def send_accepted_results(self, file_name):
+        self.clear_in_frame_layout()
+        send_accepted_protocol(file_name)
+
+    def get_text_file(self, textEditor, btn_accept):
+        file_name, _ = QFileDialog.getOpenFileName(self, 'Open Txt File', r"Protocols",
+                                                   "Text files (*.txt)")
+        if(file_name.endswith('.txt')):
+            with open(file_name, 'r') as f:
+                data = f.read()
+                textEditor.setPlainText(data)
+                f.close()
+            self.in_frame_layout.addWidget(btn_accept, 1, 2)
+            btn_accept.clicked.connect(partial(self.send_accepted_results, file_name=file_name))
+        else:
+            pass
+
+
+
+    def write_cancellation_results(self, result):
+        self.clear_in_frame_layout()
+
+
