@@ -288,6 +288,7 @@ class MainWindow(QMainWindow):
             self.in_frame_layout.addWidget(buttons, row, 1, 1, 2)
             row += 1
             if mark.text() == 'Punktualność zajęć: ':
+                buttons_temp = buttons
                 self.in_frame_layout.addWidget(delay_label, row, 0)
                 delay = QTextEdit()
                 formal_mark_dict[delay_label.text()] = delay
@@ -296,7 +297,7 @@ class MainWindow(QMainWindow):
                 delay.hide()
                 for widget in buttons.children():
                     if isinstance(widget, QRadioButton):
-                        widget.clicked.connect(lambda : self.show_delay(buttons, delay_label, delay))
+                        widget.clicked.connect(lambda : self.show_delay(buttons_temp, delay_label, delay))
                 row += 1
 
     def show_delay(self, buttons: QGroupBox, delay_label, delay):
@@ -304,8 +305,6 @@ class MainWindow(QMainWindow):
         delay_label.hide()
         for button in buttons.children():
             if isinstance(button, QRadioButton):
-                if button.text() == 'Tak':
-                    button.setChecked(True)
                 if button.isChecked() and button.text() == 'Tak':
                     print('ala')
                     delay.show()
