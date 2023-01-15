@@ -1,4 +1,5 @@
 import copy
+import os
 import sys
 from functools import partial
 
@@ -23,6 +24,9 @@ def create_yes_no_radio_buttons():
     yes = QRadioButton('Tak')
     no = QRadioButton('Nie')
     not_included = QRadioButton('Nie dotyczy')
+
+    not_included.setChecked(True)
+
     group1 = QHBoxLayout()
     group = QGroupBox()
     group1.addWidget(yes)
@@ -32,15 +36,48 @@ def create_yes_no_radio_buttons():
     return group
 
 
+def create_enum_buttons():
+    six = QRadioButton('5.5')
+    five = QRadioButton('5')
+    four = QRadioButton('4')
+    three = QRadioButton('3')
+    two = QRadioButton('2')
+    zero = QRadioButton('0')
+
+    zero.setChecked(True)
+
+    group1 = QHBoxLayout()
+    group = QGroupBox()
+    group1.addWidget(six)
+    group1.addWidget(five)
+    group1.addWidget(four)
+    group1.addWidget(three)
+    group1.addWidget(two)
+    group1.addWidget(zero)
+    group.setLayout(group1)
+    return group
+
+
+def show_fields(buttons: QGroupBox, field_label, field, reverse=False):
+    field.hide()
+    field_label.hide()
+    expected = 'Tak' if not reverse else 'Nie'
+    for button in buttons.children():
+        if isinstance(button, QRadioButton):
+            if button.isChecked() and button.text() == expected:
+                field.show()
+                field_label.show()
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
         self.setWindowTitle('JSOH')
         # for now
-        self.protocol_result_list = ProtocolResultList(7)
+        self.protocol_result_list = ProtocolResultList(20)
 
-        main_layout = QGridLayout()
+        self.main_layout = QGridLayout()
 
         self.right_side_menu = QVBoxLayout()
 
@@ -70,20 +107,24 @@ class MainWindow(QMainWindow):
         empty_widget = QWidget()
         empty_widget.setFixedSize(QSize(100, 10))
 
-        main_layout.addLayout(self.right_side_menu, 1, 0)
-        main_layout.addWidget(empty_widget, 0, 1)
-        main_layout.addWidget(login_list, 0, 2)
-        main_layout.addWidget(QPushButton('Powiadomienia'), 0, 3)
-        main_layout.addWidget(QPushButton('Wyloguj się'), 0, 4)
-        main_layout.addWidget(frame, 1, 1, 1, 4)
-        main_layout.addWidget(self.scroll_area, 1, 1, 1, 4)
+        self.main_layout.addLayout(self.right_side_menu, 1, 0)
+        self.main_layout.addWidget(empty_widget, 0, 1)
+        self.main_layout.addWidget(login_list, 0, 2)
+        self.main_layout.addWidget(QPushButton('Powiadomienia'), 0, 3)
+        self.main_layout.addWidget(QPushButton('Wyloguj się'), 0, 4)
+        self.main_layout.addWidget(frame, 1, 1, 1, 4)
+        self.main_layout.addWidget(self.scroll_area, 1, 1, 1, 4)
+
+        empty = QWidget()
+        empty.setFixedSize(QSize(100, 50))
+        self.main_layout.addWidget(empty, 2, 0)
 
         self.setBaseSize(QSize(900, 450))
-        self.setFixedWidth(1000)
-        self.setFixedHeight(300)
+        self.setFixedWidth(1150)
+        self.setFixedHeight(450)
 
         widget = QWidget()
-        widget.setLayout(main_layout)
+        widget.setLayout(self.main_layout)
 
         self.setCentralWidget(widget)
 
@@ -96,7 +137,6 @@ class MainWindow(QMainWindow):
             self.right_side_menu_button_list[0].hide()
         if value == 0:
             self.right_side_menu_button_list[0].show()
-
 
     def clear_in_frame_layout(self):
         for i in reversed(range(self.in_frame_layout.count())):
@@ -138,7 +178,6 @@ class MainWindow(QMainWindow):
             button_list[row - 1].clicked.connect(partial(self.view_specific_protocol, result=result))
             self.in_frame_layout.addWidget(button_list[row-1], row, 4)
             row += 1
-
 
     def view_specific_protocol(self, result):
         self.clear_in_frame_layout()
@@ -208,7 +247,7 @@ class MainWindow(QMainWindow):
         frame = QFrame()
         frame.setStyleSheet('border: 1px solid black')
 
-        self.in_frame_layout.addWidget(frame, 0, 0, 1, 5)
+        self.in_frame_layout.addWidget(frame, 0, 0, 1, 6)
         self.in_frame_layout.addWidget(QLabel('nr Protokołu'), 0, 0)
         self.in_frame_layout.addWidget(QLabel('Prowadzący'), 0, 1)
         self.in_frame_layout.addWidget(QLabel('Data hospitacji'), 0, 2)
@@ -222,19 +261,78 @@ class MainWindow(QMainWindow):
             self.in_frame_layout.addWidget(QLabel("Jan Kowalski"), row, 1)
             self.in_frame_layout.addWidget(QLabel('2023-01-14'), row, 2)
             self.in_frame_layout.addWidget(QLabel('Do Wypełnienia'), row, 3)
+            self.in_frame_layout.addWidget(QLabel('Wykład' if result.form == 1 else 'Inny'), row, 4)
             # button_list[row-1].clicked.connect(lambda: self.view_specific_protocol(result))
-            button_list[row - 1].clicked.connect(lambda: self.fill_protocol(result))
-            self.in_frame_layout.addWidget(button_list[row - 1], row, 4)
+            button_list[row - 1].clicked.connect(partial(self.fill_protocol, result=result))
+            self.in_frame_layout.addWidget(button_list[row - 1], row, 5)
             row += 1
+
+    def stop_filling_protocol(self):
+        alert = QMessageBox()
+        alert.setText('Anulowano wypełnianie protokołu')
+        alert.exec()
+        self.view_protocols_to_fill()
+
+    def save_protocol(self, result, basic_info, formal_mark, substansive_mark):
+        folder = os.getcwd() + '\\Protocols'
+        if not os.path.exists(folder):
+            os.mkdir(folder)
+
+        file = folder + '\\protocol_' + str(result.id) + '.txt'
+
+        with open(file, 'w', encoding="utf-8") as f:
+            f.write('Protokół hospitacji nr: ' + str(result.id) + '\n')
+            f.writelines([label.text() + '\n' for label in basic_info])
+
+            f.write('\nOcena formalna zajęć: \n\n')
+            for key, value in formal_mark.items():
+                f.write(key)
+
+                for widget in value.children():
+                    if isinstance(widget, QRadioButton):
+                        if widget.isChecked():
+                            f.write(widget.text() + '\n')
+                if isinstance(value, QTextEdit):
+                    f.write(value.toPlainText() + '\n')
+
+            f.write('\nOcena merytoryczna zajęć: \n\n')
+
+            for key, value in substansive_mark.items():
+                f.write(key)
+
+                for widget in value.children():
+                    if isinstance(widget, QRadioButton):
+                        if widget.isChecked():
+                            f.write(widget.text() + '\n')
+
+                if isinstance(value, QTextEdit):
+                    f.write(value.toPlainText() + '\n')
+
+                if isinstance(value, QLabel):
+                    f.write(value.text() + '\n')
+
+        alert = QMessageBox()
+        alert.setText('Zapisano protokół')
+        alert.exec()
+        self.view_protocols_to_fill()
+
+
 
     def fill_protocol(self, result):
         self.clear_in_frame_layout()
-        btn_back = QPushButton("Wróć do listy")
-        btn_back.clicked.connect(self.view_protocols_to_fill)
+
+        btn_back = QPushButton("Anuluj")
+        btn_back.clicked.connect(self.stop_filling_protocol)
+
+        btn_accept = QPushButton("Zaakceptuj protokół")
+        btn_accept.clicked.connect(lambda: self.save_protocol(result, basic_info, formal_mark_dict,
+                                                              substansive_mark_dict))
 
         self.in_frame_layout.addWidget(QLabel('Protokół hospitacji nr: '), 0, 0)
         self.in_frame_layout.addWidget(QLabel(str(result.id)), 0, 1)
-        self.in_frame_layout.addWidget(btn_back, 0, 2)
+
+        self.main_layout.addWidget(btn_back, 2, 3)
+        self.main_layout.addWidget(btn_accept, 2, 4)
 
         # to be downloaded from database
         basic_info = [QLabel(f'Prawadzący zajęcia/Jednostka organizacyjna {"Jan Kowalski"}'),
@@ -252,33 +350,32 @@ class MainWindow(QMainWindow):
             self.in_frame_layout.addWidget(info, row, 0, 1, 2)
             row += 1
 
-        empty_widget = QWidget()
-        empty_widget.setFixedSize(QSize(100, 25))
-
-        self.in_frame_layout.addWidget(empty_widget, row, 0)
-        row += 1
+        row = self.add_empty_widget(row)
 
         self.in_frame_layout.addWidget(QLabel('Ocena formalna zajęć:'), row, 0, 1, 2)
         row += 1
 
-        empty_widget = QWidget()
-        empty_widget.setFixedSize(QSize(100, 25))
+        row = self.add_empty_widget(row)
 
-        self.in_frame_layout.addWidget(empty_widget, row, 0)
-        row += 1
+        formal_mark_template = ['Punktualność zajęć: ', 'Sprawdzenie obecności studentów: ', 'Wyposażenie sali: ',
+                                'Weryfikacja czy prowadzący jest widziany i słyszany: ',
+                                'Treść zajęć zgodna z kartą przedmiotu: ',
+                                'Prowadzący umożliwia dostęp do informacji przez środku komunikacji elektronicznej: ']
 
-        formal_mark = [QLabel('Punktualność zajęć: '),
-                       QLabel('Sprawdzenie obecności studentów: '),
-                       QLabel('Wyposażenie sali: '),
-                       QLabel('Weryfikacja czy prowadzący jest widziany i słyszany: '),
-                       QLabel('Treść zajęć zgodna z kartą przedmiotu: '),
-                       QLabel('Prowadzący umożliwia dostęp do informacji przez środku komunikacji elektronicznej: ')]
+        formal_mark = []
+
+        for mark in formal_mark_template:
+            formal_mark.append(QLabel(mark))
 
         formal_mark_dict = {
 
         }
 
         delay_label = QLabel('Opóźnienie: ')
+
+        present_label = QLabel('Liczba obecnych: ')
+
+        eq_label = QLabel('Dlaczego sala jest niewyposażona: ')
 
         for mark in formal_mark:
             self.in_frame_layout.addWidget(mark, row, 0)
@@ -287,29 +384,150 @@ class MainWindow(QMainWindow):
             self.in_frame_layout.addWidget(buttons, row, 1, 1, 2)
             row += 1
             if mark.text() == 'Punktualność zajęć: ':
+                buttons_delay = buttons
                 self.in_frame_layout.addWidget(delay_label, row, 0)
                 delay = QTextEdit()
                 formal_mark_dict[delay_label.text()] = delay
                 self.in_frame_layout.addWidget(delay, row, 1, 1, 2)
                 delay_label.hide()
                 delay.hide()
-                for widget in buttons.children():
+                for widget in buttons_delay.children():
                     if isinstance(widget, QRadioButton):
-                        widget.clicked.connect(lambda : self.show_delay(buttons, delay_label, delay))
+                        widget.clicked.connect(lambda : show_fields(buttons_delay, delay_label, delay))
                 row += 1
 
-    def show_delay(self, buttons: QGroupBox, delay_label, delay):
-        delay.hide()
-        delay_label.hide()
-        for button in buttons.children():
-            if isinstance(button, QRadioButton):
-                if button.text() == 'Tak':
-                    button.setChecked(True)
-                if button.isChecked() and button.text() == 'Tak':
-                    print('ala')
-                    delay.show()
-                    delay_label.show()
+            if mark.text() == 'Sprawdzenie obecności studentów: ':
+                buttons_present = buttons
+                self.in_frame_layout.addWidget(present_label, row, 0)
+                present = QTextEdit()
+                formal_mark_dict[present_label.text()] = present
+                self.in_frame_layout.addWidget(present, row, 1, 1, 2)
+                present_label.hide()
+                present.hide()
+                for widget in buttons_present.children():
+                    if isinstance(widget, QRadioButton):
+                        widget.clicked.connect(lambda: show_fields(buttons_present, present_label, present))
+                row += 1
 
+            if mark.text() == 'Wyposażenie sali: ':
+                buttons_eq = buttons
+                self.in_frame_layout.addWidget(eq_label, row, 0)
+                eq = QTextEdit()
+                formal_mark_dict[eq_label.text()] = eq
+                self.in_frame_layout.addWidget(eq, row, 1, 1, 2)
+                eq_label.hide()
+                eq.hide()
+                for widget in buttons_eq.children():
+                    if isinstance(widget, QRadioButton):
+                        widget.clicked.connect(lambda: show_fields(buttons_eq, eq_label, eq, True))
+                row += 1
+
+        formal_mark_other = QTextEdit()
+
+        self.in_frame_layout.addWidget(QLabel('Inne uwagi: '), row, 0, 1, 2)
+        self.in_frame_layout.addWidget(formal_mark_other, row, 1, 1, 2)
+        row += 1
+
+        formal_mark_dict['Inne uwagi: '] = formal_mark_other
+
+        row = self.add_empty_widget(row)
+
+        self.in_frame_layout.addWidget(QLabel('Ocena merytoryczna ogólna:'), row, 0, 1, 2)
+        row += 1
+
+        row = self.add_empty_widget(row)
+
+        substansive_mark_template = ['Przedstawia temat', 'Wyjaśnia zagadnienia', 'Realizuje zajęcia z zaangażowaniem',
+                                     'Inspiruje studentów do samodzielnego myślenia', 'Odpowiada na pytania studentów',
+                                     'Stosuje środki dydaktyczne', 'Posługuje się poprawnym językiem',
+                                     'Panuje nad dynamiką grupy', 'Tworzy pozytywną atmosferę podczas zajęć',
+                                     'Sprawnie posługuje się technicznymi środkami przekazu wiedzy']
+
+        # jeżeli wykład to:
+        if result.form == 1:
+            substansive_mark_template.extend(['Przekazuje aktualną wiedzę',
+                                              'Przedstawia materiał w sposób zorganizowany i uporządkowany',
+                                              'Wykazuje się umiejętnościami nauczania',
+                                              'Poprawny dobór przykładów',
+                                              'Odpowiednie tempo prowadzonych zajęć'])
+        else:
+            substansive_mark_template.extend(['Przygotowanie merytoryczne do danej formy zajęć',
+                                              'Określenie zadań dla studentów',
+                                              'Rozplanowanie zajęć w czasie',
+                                              'Kontrola umiejętności zdobytych podczas zajęć',
+                                              'Prowadzenie dokumentacji zajęć'])
+
+        substansive_mark = []
+
+        for mark in substansive_mark_template:
+            mark += ': '
+            substansive_mark.append(QLabel(mark))
+
+        substansive_mark_dict = {
+
+        }
+
+        avarage_mark = QLabel('0')
+
+        for mark in substansive_mark:
+            self.in_frame_layout.addWidget(mark, row, 0)
+            buttons = create_enum_buttons()
+            substansive_mark_dict[mark.text()] = buttons
+            self.in_frame_layout.addWidget(buttons, row, 1, 1, 2)
+            for widget in buttons.children():
+                if isinstance(widget, QRadioButton):
+                    widget.clicked.connect(partial(self.calculate_avg, substansive_mark_dict=substansive_mark_dict,
+                                                   label=avarage_mark))
+            row += 1
+
+        self.in_frame_layout.addWidget(QLabel('Średnia ocena zajęć: '), row, 0)
+
+        substansive_mark_dict['Średnia ocena zajęć: '] = avarage_mark
+
+        self.in_frame_layout.addWidget(avarage_mark, row, 1)
+
+        row += 1
+
+        row = self.add_empty_widget(row)
+
+        self.in_frame_layout.addWidget(QLabel('Ocena końcowa: '), row, 0)
+
+        final_mark_template = ['wzorowa', 'bardzo dobra', 'dobra', 'dostateczna', 'negatywna']
+        group1 = QHBoxLayout()
+        group = QGroupBox()
+        for mark in final_mark_template:
+            group1.addWidget(QRadioButton(mark))
+        group.setLayout(group1)
+        self.in_frame_layout.addWidget(group, row, 1, 1, 2)
+        row += 1
+
+        substansive_mark_dict['Ocena końcowa: '] = group
+
+        self.in_frame_layout.addWidget(QLabel('Wnioski i zalecenia: '), row, 0)
+
+        solution = QTextEdit('')
+        self.in_frame_layout.addWidget(solution, row, 1, 1, 2)
+
+        substansive_mark_dict['Wnioski i zalecenia: '] = solution
+
+
+    def calculate_avg(self, substansive_mark_dict, label):
+        value = 0
+        total = len(substansive_mark_dict) - 3
+        for buttons in substansive_mark_dict.values():
+            for child in buttons.children():
+                if isinstance(child, QRadioButton):
+                    value += float(child.text()) if child.isChecked() else 0
+                    total -= 1 if child.text() == '0' and child.isChecked() else 0
+        label.setText(str(round(value/total, 2)))
+
+    def add_empty_widget(self, row):
+        empty_widget = QWidget()
+        empty_widget.setFixedSize(QSize(100, 25))
+
+        self.in_frame_layout.addWidget(empty_widget, row, 0)
+        row += 1
+        return row
 
     def view_specific_protocol(self, result):
         self.clear_in_frame_layout()
@@ -372,3 +590,4 @@ class MainWindow(QMainWindow):
 
     def write_cancellation_results(self, result):
         self.clear_in_frame_layout()
+
