@@ -279,9 +279,34 @@ class MainWindow(QMainWindow):
 
         }
 
+        delay_label = QLabel('Opóźnienie: ')
+
         for mark in formal_mark:
             self.in_frame_layout.addWidget(mark, row, 0)
             buttons = create_yes_no_radio_buttons()
             formal_mark_dict[mark.text()] = buttons
             self.in_frame_layout.addWidget(buttons, row, 1, 1, 2)
             row += 1
+            if mark.text() == 'Punktualność zajęć: ':
+                self.in_frame_layout.addWidget(delay_label, row, 0)
+                delay = QTextEdit()
+                formal_mark_dict[delay_label.text()] = delay
+                self.in_frame_layout.addWidget(delay, row, 1, 1, 2)
+                delay_label.hide()
+                delay.hide()
+                for widget in buttons.children():
+                    if isinstance(widget, QRadioButton):
+                        widget.clicked.connect(lambda : self.show_delay(buttons, delay_label, delay))
+                row += 1
+
+    def show_delay(self, buttons: QGroupBox, delay_label, delay):
+        delay.hide()
+        delay_label.hide()
+        for button in buttons.children():
+            if isinstance(button, QRadioButton):
+                if button.text() == 'Tak':
+                    button.setChecked(True)
+                if button.isChecked() and button.text() == 'Tak':
+                    print('ala')
+                    delay.show()
+                    delay_label.show()
