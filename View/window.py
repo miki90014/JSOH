@@ -305,7 +305,6 @@ class MainWindow(QMainWindow):
         for button in buttons.children():
             if isinstance(button, QRadioButton):
                 if button.isChecked() and button.text() == 'Tak':
-                    print('ala')
                     delay.show()
                     delay_label.show()
 
