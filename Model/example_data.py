@@ -12,6 +12,7 @@ class ProtocolResult:
         self.received_date = date.today()
         self.accepted_date = date.today()
         self.status = randint(0, 3)
+        self.form = randint(1, 2)
 
 
 class ProtocolResultList:
