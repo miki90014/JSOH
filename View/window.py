@@ -64,9 +64,6 @@ class MainWindow(QMainWindow):
         login_list.addItems(['Hospitowany', 'Hospitujący', 'Dziekan'])
         login_list.currentIndexChanged.connect(self.on_login_list_change)
 
-        frame = QFrame()
-        frame.setStyleSheet('border: 1px solid black')
-
         empty_widget = QWidget()
         empty_widget.setFixedSize(QSize(100, 10))
 
@@ -75,7 +72,6 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(login_list, 0, 2)
         main_layout.addWidget(QPushButton('Powiadomienia'), 0, 3)
         main_layout.addWidget(QPushButton('Wyloguj się'), 0, 4)
-        main_layout.addWidget(frame, 1, 1, 1, 4)
         main_layout.addWidget(self.scroll_area, 1, 1, 1, 4)
 
         self.setBaseSize(QSize(900, 450))
@@ -92,16 +88,25 @@ class MainWindow(QMainWindow):
         self.right_side_menu_button_list[1].clicked.connect(self.view_protocols_to_fill)
 
     def on_login_list_change(self, value):
-        if value == 1:
-            self.right_side_menu_button_list[0].hide()
+        self.hide_all_right_side_menu_button_list()
         if value == 0:
             self.right_side_menu_button_list[0].show()
+            self.right_side_menu_button_list[1].show()
+        if value == 1:
+            self.right_side_menu_button_list[2].show()
+        if value == 2:
+            self.right_side_menu_button_list[3].show()
+
+    def hide_all_right_side_menu_button_list(self):
+        self.right_side_menu_button_list[0].hide()
+        self.right_side_menu_button_list[1].hide()
+        self.right_side_menu_button_list[2].hide()
+        self.right_side_menu_button_list[3].hide()
 
 
     def clear_in_frame_layout(self):
         for i in reversed(range(self.in_frame_layout.count())):
             self.in_frame_layout.itemAt(i).widget().setParent(None)
-        self.setBaseSize(QSize(900, 450))
 
     def view_protocol_results(self):
         self.clear_in_frame_layout()
