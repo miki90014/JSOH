@@ -341,9 +341,6 @@ class MainWindow(QMainWindow):
         self.in_frame_layout.addWidget(QLabel('Protokół hospitacji nr: '), 0, 0)
         self.in_frame_layout.addWidget(QLabel(str(result.id)), 0, 1)
 
-        self.main_layout.addWidget(btn_back, 2, 3)
-        self.main_layout.addWidget(btn_accept, 2, 4)
-
         # to be downloaded from database
         basic_info = [QLabel(f'Prawadzący zajęcia/Jednostka organizacyjna {"Jan Kowalski"}'),
                       QLabel(f'Nazwa kursu/kierunek studiów {"Projektowanie Oprogramowania"}'),
@@ -519,6 +516,11 @@ class MainWindow(QMainWindow):
         self.in_frame_layout.addWidget(solution, row, 1, 1, 2)
 
         substansive_mark_dict['Wnioski i zalecenia: '] = solution
+
+        row += 1
+        self.in_frame_layout.addWidget(btn_back, row, 0)
+        self.in_frame_layout.addWidget(btn_accept, row, 1, 1, 2)
+
 
     def calculate_avg(self, substansive_mark_dict, label):
         value = 0
