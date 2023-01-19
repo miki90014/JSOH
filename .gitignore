@@ -2,4 +2,7 @@
 View/__pycache__/
 venv/
 Model/__pycache__/
+ProtocolsAppeal/
 Protocols/
+ProtocolsAccepted/
+Const/__pycache__/
