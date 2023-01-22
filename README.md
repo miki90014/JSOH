@@ -21,6 +21,7 @@ pamiętajcie o podanej kolejności - jeśli chcecie zmienić, wprowadźcie zmian
 - **nr protokołu** - `klucz`
 - **nr hospitacji** - `klucz obcy`
 - **ocena końcowa**
+- **ocena merytoryczna**
 - **ocena formalna**
 - **wnioski i zalecenia**
 - **inne uwagi**
