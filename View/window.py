@@ -1,13 +1,14 @@
 import copy
 import os
 import sys
+from datetime import date
 from functools import partial
 
 from PyQt6.QtCore import QSize, Qt, QDir
 from PyQt6.QtWidgets import *
 from PyQt6.QtGui import QColor, QPalette
-from Model.example_data import ProtocolResult, ProtocolResultList, printResults, \
-    send_accepted_protocol
+from Model.example_data import ProtocolResult, ProtocolResultList, print_results, \
+    send_accepted_protocol, create_appeal_from_protocol
 
 
 class Color(QWidget):
@@ -69,6 +70,17 @@ def show_fields(buttons: QGroupBox, field_label, field, reverse=False):
                 field_label.show()
 
 
+def calculate_avg(substansive_mark_dict, label):
+    value = 0
+    total = len(substansive_mark_dict)
+    for buttons in substansive_mark_dict.values():
+        for child in buttons.children():
+            if isinstance(child, QRadioButton):
+                value += float(child.text()) if child.isChecked() else 0
+                total -= 1 if child.text() == '0' and child.isChecked() else 0
+    label.setText(str(round(value/total, 2)))
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -98,7 +110,7 @@ class MainWindow(QMainWindow):
             self.right_side_menu.addWidget(button)
 
         login_list = QComboBox()
-        login_list.addItems(['Hospitowany', 'Hospitujący', 'Dziekan'])
+        login_list.addItems(['Hospitujący', 'Hospitowany', 'Dziekan'])
         login_list.currentIndexChanged.connect(self.on_login_list_change)
 
         frame = QFrame()
@@ -132,16 +144,29 @@ class MainWindow(QMainWindow):
         self.right_side_menu_button_list[2].clicked.connect(self.view_protocol_results)
         self.right_side_menu_button_list[1].clicked.connect(self.view_protocols_to_fill)
 
+        self.hide_all_right_side_menu_button_list()
+        self.right_side_menu_button_list[0].show()
+        self.right_side_menu_button_list[1].show()
+
     def on_login_list_change(self, value):
-        if value == 1:
-            self.right_side_menu_button_list[0].hide()
+        self.hide_all_right_side_menu_button_list()
         if value == 0:
             self.right_side_menu_button_list[0].show()
+            self.right_side_menu_button_list[1].show()
+        if value == 1:
+            self.right_side_menu_button_list[2].show()
+        if value == 2:
+            self.right_side_menu_button_list[3].show()
+
+    def hide_all_right_side_menu_button_list(self):
+        self.right_side_menu_button_list[0].hide()
+        self.right_side_menu_button_list[1].hide()
+        self.right_side_menu_button_list[2].hide()
+        self.right_side_menu_button_list[3].hide()
 
     def clear_in_frame_layout(self):
         for i in reversed(range(self.in_frame_layout.count())):
             self.in_frame_layout.itemAt(i).widget().setParent(None)
-        self.setBaseSize(QSize(900, 450))
 
     def view_protocol_results(self):
         self.clear_in_frame_layout()
@@ -216,7 +241,7 @@ class MainWindow(QMainWindow):
         self.in_frame_layout.addWidget(btn_print, 1, 0)
         self.in_frame_layout.addWidget(btn_upload, 1, 1)
         self.in_frame_layout.addWidget(textEditor, 0, 0, 1, 3)
-        btn_print.clicked.connect(partial(printResults, result=result))
+        btn_print.clicked.connect(partial(print_results, result=result))
         btn_upload.clicked.connect(partial(self.get_text_file, textEditor=textEditor, btn_accept=btn_accept))
 
     def send_accepted_results(self, file_name):
@@ -226,7 +251,7 @@ class MainWindow(QMainWindow):
     def get_text_file(self, textEditor, btn_accept):
         file_name, _ = QFileDialog.getOpenFileName(self, 'Open Txt File', r"Protocols",
                                                    "Text files (*.txt)")
-        if(file_name.endswith('.txt')):
+        if file_name.endswith('.txt'):
             with open(file_name, 'r') as f:
                 data = f.read()
                 textEditor.setPlainText(data)
@@ -316,8 +341,6 @@ class MainWindow(QMainWindow):
         alert.exec()
         self.view_protocols_to_fill()
 
-
-
     def fill_protocol(self, result):
         self.clear_in_frame_layout()
 
@@ -330,9 +353,6 @@ class MainWindow(QMainWindow):
 
         self.in_frame_layout.addWidget(QLabel('Protokół hospitacji nr: '), 0, 0)
         self.in_frame_layout.addWidget(QLabel(str(result.id)), 0, 1)
-
-        self.main_layout.addWidget(btn_back, 2, 3)
-        self.main_layout.addWidget(btn_accept, 2, 4)
 
         # to be downloaded from database
         basic_info = [QLabel(f'Prawadzący zajęcia/Jednostka organizacyjna {"Jan Kowalski"}'),
@@ -476,7 +496,7 @@ class MainWindow(QMainWindow):
             self.in_frame_layout.addWidget(buttons, row, 1, 1, 2)
             for widget in buttons.children():
                 if isinstance(widget, QRadioButton):
-                    widget.clicked.connect(partial(self.calculate_avg, substansive_mark_dict=substansive_mark_dict,
+                    widget.clicked.connect(partial(calculate_avg, substansive_mark_dict=substansive_mark_dict,
                                                    label=avarage_mark))
             row += 1
 
@@ -510,16 +530,9 @@ class MainWindow(QMainWindow):
 
         substansive_mark_dict['Wnioski i zalecenia: '] = solution
 
-
-    def calculate_avg(self, substansive_mark_dict, label):
-        value = 0
-        total = len(substansive_mark_dict) - 3
-        for buttons in substansive_mark_dict.values():
-            for child in buttons.children():
-                if isinstance(child, QRadioButton):
-                    value += float(child.text()) if child.isChecked() else 0
-                    total -= 1 if child.text() == '0' and child.isChecked() else 0
-        label.setText(str(round(value/total, 2)))
+        row += 1
+        self.in_frame_layout.addWidget(btn_back, row, 0)
+        self.in_frame_layout.addWidget(btn_accept, row, 1, 1, 2)
 
     def add_empty_widget(self, row):
         empty_widget = QWidget()
@@ -551,11 +564,11 @@ class MainWindow(QMainWindow):
         self.clear_in_frame_layout()
         btn_accept = QPushButton("Zaakceptuj")
         btn_cancellation = QPushButton("Napisz odwołanie")
-        self.in_frame_layout.addWidget(QLabel("Czy chcesz zaakceptować wyniki?"), 0,0,2, 1)
-        self.in_frame_layout.addWidget(btn_accept, 1,0)
+        self.in_frame_layout.addWidget(QLabel("Czy chcesz zaakceptować wyniki?"), 0, 0, 2, 1)
+        self.in_frame_layout.addWidget(btn_accept, 1, 0)
         self.in_frame_layout.addWidget(btn_cancellation, 1, 1)
         btn_accept.clicked.connect(partial(self.accept_results, result=result))
-        btn_cancellation.clicked.connect(partial(self.write_cancellation_results, result=result))
+        btn_cancellation.clicked.connect(partial(self.write_appeal_from_protocol_results, result=result))
 
     def accept_results(self, result):
         self.clear_in_frame_layout()
@@ -566,15 +579,20 @@ class MainWindow(QMainWindow):
         self.in_frame_layout.addWidget(btn_print, 1, 0)
         self.in_frame_layout.addWidget(btn_upload, 1, 1)
         self.in_frame_layout.addWidget(textEditor, 0, 0, 1, 3)
-        btn_print.clicked.connect(partial(printResults, result=result))
-        btn_upload.clicked.connect(partial(self.get_text_file, textEditor=textEditor, btn_accept=btn_accept))
+        btn_print.clicked.connect(partial(print_results, result=result))
+        btn_upload.clicked.connect(partial(self.get_text_file, textEditor=textEditor, btn_accept=btn_accept,
+                                           id_pro=result.id))
 
-    def send_accepted_results(self, file_name):
+    def send_accepted_results(self, file_name, id_pro):
+        f = open(file_name, "a")
+        f.writelines("\nData akceptacji: "+str(date.today()))
+        f.close()
+        self.protocol_result_list.list[self.protocol_result_list.get_index_by_id(id_pro)].status = 0
         self.clear_in_frame_layout()
         send_accepted_protocol(file_name)
 
-    def get_text_file(self, textEditor, btn_accept):
-        file_name, _ = QFileDialog.getOpenFileName(self, 'Open Txt File', r"Protocols",
+    def get_text_file(self, textEditor, btn_accept, id_pro):
+        file_name, _ = QFileDialog.getOpenFileName(self, 'Open Txt File', r"ProtocolsAccepted",
                                                    "Text files (*.txt)")
         if(file_name.endswith('.txt')):
             with open(file_name, 'r') as f:
@@ -582,9 +600,24 @@ class MainWindow(QMainWindow):
                 textEditor.setPlainText(data)
                 f.close()
             self.in_frame_layout.addWidget(btn_accept, 1, 2)
-            btn_accept.clicked.connect(partial(self.send_accepted_results, file_name=file_name))
+            btn_accept.clicked.connect(partial(self.send_accepted_results, file_name=file_name, id_pro=id_pro))
         else:
             pass
 
-    def write_cancellation_results(self, result):
+    def write_appeal_from_protocol_results(self, result):
         self.clear_in_frame_layout()
+        text_editor = QTextEdit()
+        label = QLabel("Treść odwołania")
+        btn_accept = QPushButton("Wyślij")
+
+        self.in_frame_layout.addWidget(label, 0, 0)
+        self.in_frame_layout.addWidget(text_editor, 0, 1, 1, 2)
+        self.in_frame_layout.addWidget(btn_accept, 1, 2)
+
+        btn_accept.clicked.connect(partial(self.send_appeal_from_protocol_results, result=result, text_editor=text_editor))
+
+    def send_appeal_from_protocol_results(self, result, text_editor):
+        self.clear_in_frame_layout()
+        self.protocol_result_list.list[self.protocol_result_list.get_index_by_id(result.id)].status = 2
+        create_appeal_from_protocol(text_editor.toPlainText(), result)
+

@@ -1,5 +1,4 @@
 import os
-import secrets
 import sys
 from time import sleep, time
 from datetime import date, datetime, time
@@ -27,19 +26,41 @@ class ProtocolResultList:
             if protocol.id == i:
                 return protocol
 
+    def get_index_by_id(self, i):
+        index = -1
+        for protocol in self.list:
+            index += 1
+            if protocol.id == i:
+                return index
 
-def printResults(result):
-    path = os.getcwd() + "\\Protocols"
-    isExist = os.path.exists(path)
-    if not isExist:
+
+def print_results(result):
+    path = os.getcwd() + "\\ProtocolsAccepted"
+    is_exist = os.path.exists(path)
+    if not is_exist:
         os.makedirs(path)
         print("The new directory is created!")
-    filename = os.path.join("Protocols\\", secrets.token_hex(10)) + ".txt"
+    filename = os.path.join("ProtocolsAccepted\\", "accepted_protocol")
+    filename += "_" + str(result.id) + ".txt"
     f = open(filename, "x")
     f.write("Id Protokołu: {}".format(result.id))
     f.close()
     os.startfile(filename)
 
+def create_appeal_from_protocol(text, result):
+    path = os.getcwd() + "\\ProtocolsAppeal"
+    is_exist = os.path.exists(path)
+    if not is_exist:
+        os.makedirs(path)
+        print("The new directory is created!")
+    filename = os.path.join("ProtocolsAppeal\\", "appeal_from_protocol")
+    filename += "_" + str(result.id) + ".txt"
+    f = open(filename, "x")
+    f.write("ODWOŁANIE WYNIKU PROTOKOŁU\n")
+    f.write("Id Protokołu: {}".format(result.id)+"\n")
+    f.write("Treść Odwołania: {}".format(text)+"\n")
+    f.write("\nData akceptacji: " + str(date.today()))
+    f.close()
 
 def send_accepted_protocol(filename):
     pass
