@@ -72,7 +72,7 @@ def show_fields(buttons: QGroupBox, field_label, field, reverse=False):
 
 def calculate_avg(substansive_mark_dict, label):
     value = 0
-    total = len(substansive_mark_dict)
+    total = len(substansive_mark_dict) - 3
     for buttons in substansive_mark_dict.values():
         for child in buttons.children():
             if isinstance(child, QRadioButton):
