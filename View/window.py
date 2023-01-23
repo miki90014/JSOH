@@ -70,6 +70,17 @@ def show_fields(buttons: QGroupBox, field_label, field, reverse=False):
                 field_label.show()
 
 
+def calculate_avg(substansive_mark_dict, label):
+    value = 0
+    total = len(substansive_mark_dict)
+    for buttons in substansive_mark_dict.values():
+        for child in buttons.children():
+            if isinstance(child, QRadioButton):
+                value += float(child.text()) if child.isChecked() else 0
+                total -= 1 if child.text() == '0' and child.isChecked() else 0
+    label.setText(str(round(value/total, 2)))
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -99,7 +110,7 @@ class MainWindow(QMainWindow):
             self.right_side_menu.addWidget(button)
 
         login_list = QComboBox()
-        login_list.addItems(['Hospitowany', 'Hospitujący', 'Dziekan'])
+        login_list.addItems(['Hospitujący', 'Hospitowany', 'Dziekan'])
         login_list.currentIndexChanged.connect(self.on_login_list_change)
 
         frame = QFrame()
@@ -132,6 +143,10 @@ class MainWindow(QMainWindow):
         # example of how connection will be working
         self.right_side_menu_button_list[2].clicked.connect(self.view_protocol_results)
         self.right_side_menu_button_list[1].clicked.connect(self.view_protocols_to_fill)
+
+        self.hide_all_right_side_menu_button_list()
+        self.right_side_menu_button_list[0].show()
+        self.right_side_menu_button_list[1].show()
 
     def on_login_list_change(self, value):
         self.hide_all_right_side_menu_button_list()
@@ -236,7 +251,7 @@ class MainWindow(QMainWindow):
     def get_text_file(self, textEditor, btn_accept):
         file_name, _ = QFileDialog.getOpenFileName(self, 'Open Txt File', r"Protocols",
                                                    "Text files (*.txt)")
-        if(file_name.endswith('.txt')):
+        if file_name.endswith('.txt'):
             with open(file_name, 'r') as f:
                 data = f.read()
                 textEditor.setPlainText(data)
@@ -325,8 +340,6 @@ class MainWindow(QMainWindow):
         alert.setText('Zapisano protokół')
         alert.exec()
         self.view_protocols_to_fill()
-
-
 
     def fill_protocol(self, result):
         self.clear_in_frame_layout()
@@ -483,7 +496,7 @@ class MainWindow(QMainWindow):
             self.in_frame_layout.addWidget(buttons, row, 1, 1, 2)
             for widget in buttons.children():
                 if isinstance(widget, QRadioButton):
-                    widget.clicked.connect(partial(self.calculate_avg, substansive_mark_dict=substansive_mark_dict,
+                    widget.clicked.connect(partial(calculate_avg, substansive_mark_dict=substansive_mark_dict,
                                                    label=avarage_mark))
             row += 1
 
@@ -520,17 +533,6 @@ class MainWindow(QMainWindow):
         row += 1
         self.in_frame_layout.addWidget(btn_back, row, 0)
         self.in_frame_layout.addWidget(btn_accept, row, 1, 1, 2)
-
-
-    def calculate_avg(self, substansive_mark_dict, label):
-        value = 0
-        total = len(substansive_mark_dict)
-        for buttons in substansive_mark_dict.values():
-            for child in buttons.children():
-                if isinstance(child, QRadioButton):
-                    value += float(child.text()) if child.isChecked() else 0
-                    total -= 1 if child.text() == '0' and child.isChecked() else 0
-        label.setText(str(round(value/total, 2)))
 
     def add_empty_widget(self, row):
         empty_widget = QWidget()
