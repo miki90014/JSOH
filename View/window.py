@@ -513,7 +513,7 @@ class MainWindow(QMainWindow):
 
     def calculate_avg(self, substansive_mark_dict, label):
         value = 0
-        total = len(substansive_mark_dict)
+        total = len(substansive_mark_dict) - 3
         for buttons in substansive_mark_dict.values():
             for child in buttons.children():
                 if isinstance(child, QRadioButton):
@@ -586,9 +586,5 @@ class MainWindow(QMainWindow):
         else:
             pass
 
-
-
     def write_cancellation_results(self, result):
         self.clear_in_frame_layout()
-
-
