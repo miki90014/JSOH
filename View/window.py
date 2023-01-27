@@ -11,16 +11,6 @@ from Model.example_data import ProtocolResult, ProtocolResultList, print_results
     send_accepted_protocol, create_appeal_from_protocol
 
 
-class Color(QWidget):
-    def __init__(self, color):
-        super(Color, self).__init__()
-        self.setAutoFillBackground(True)
-
-        palette = self.palette()
-        palette.setColor(QPalette.ColorRole.Window, QColor(color))
-        self.setPalette(palette)
-
-
 def create_yes_no_radio_buttons():
     yes = QRadioButton('Tak')
     no = QRadioButton('Nie')
