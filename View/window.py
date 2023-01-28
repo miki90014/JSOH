@@ -131,15 +131,16 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(widget)
 
-        # example of how connection will be working
-        self.right_side_menu_button_list[2].clicked.connect(self.view_protocol_results)
         self.right_side_menu_button_list[1].clicked.connect(self.view_protocols_to_fill)
+        self.right_side_menu_button_list[2].clicked.connect(self.view_protocol_results)
+        self.right_side_menu_button_list[3].clicked.connect(self.view_and_sort_protocols)
 
         self.hide_all_right_side_menu_button_list()
         self.right_side_menu_button_list[0].show()
         self.right_side_menu_button_list[1].show()
 
     def on_login_list_change(self, value):
+        self.clear_in_frame_layout()
         self.hide_all_right_side_menu_button_list()
         if value == 0:
             self.right_side_menu_button_list[0].show()
@@ -653,3 +654,44 @@ class MainWindow(QMainWindow):
         self.protocol_result_list.list[self.protocol_result_list.get_index_by_id(result.id)].status = 2
         create_appeal_from_protocol(text_editor.toPlainText(), result)
 
+    def view_and_sort_protocols(self):
+        self.clear_in_frame_layout()
+
+        button_list = []
+
+        frame = QFrame()
+        frame.setFixedHeight(18)
+        frame.setStyleSheet('border: 1px solid black')
+
+        self.in_frame_layout.addWidget(frame, 0, 0, 1, 6)
+        self.in_frame_layout.addWidget(QLabel('nr Protokołu'), 0, 0)
+        self.in_frame_layout.addWidget(QLabel('Prowadzący'), 0, 1)
+        self.in_frame_layout.addWidget(QLabel('Data hospitacji'), 0, 2)
+        self.in_frame_layout.addWidget(QLabel('Ocena pracownika'), 0, 3)
+
+        protocols = []
+        path = f'{os.getcwd()}\\Protocols'
+        for r, d, f in os.walk(path):
+            for file in f:
+                if '.json' in file:
+                    protocols.append(os.path.join(r, file))
+
+        protocols_in_dir = {
+
+        }
+        for protocol in protocols:
+            with open(protocol, 'r', encoding='utf-8') as file:
+                protocol_number = os.path.basename(protocol).split('_')[1].split('.')[0]
+                protocols_in_dir[protocol_number] = json.load(file)
+
+        row = 1
+        for i in range(self.protocol_result_list.length):
+            button_list.append(QPushButton('Wypełnij'))
+
+        for number, protocol in protocols_in_dir.items():
+            self.in_frame_layout.addWidget(QLabel(number), row, 0)
+            self.in_frame_layout.addWidget(QLabel(protocol['Prawadzący zajęcia/Jednostka organizacyjna']), row, 1)
+            self.in_frame_layout.addWidget(QLabel(protocol['Data otrzymania']), row, 2)
+            self.in_frame_layout.addWidget(QLabel(protocol['Ocena merytoryczna']['Ocena końcowa'] + '(' +
+                                                  protocol['Ocena merytoryczna']['Średnia ocena zajęć'] + ')'), row, 3)
+            row += 1
