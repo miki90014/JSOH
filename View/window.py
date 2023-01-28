@@ -565,7 +565,7 @@ class MainWindow(QMainWindow):
         self.in_frame_layout.addWidget(btn_upload, 1, 1)
         self.in_frame_layout.addWidget(text_editor, 0, 0, 1, 3)
         btn_print.clicked.connect(partial(print_results, result=result))
-        btn_upload.clicked.connect(partial(self.get_text_file, textEditor=text_editor, btn_accept=btn_accept,
+        btn_upload.clicked.connect(partial(self.get_text_file, text_editor=text_editor, btn_accept=btn_accept,
                                            path=result.path_to_file))
 
     def send_accepted_results(self, file_name, path):

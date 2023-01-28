@@ -15,7 +15,7 @@ class MainWindow(QMainWindow):
         self.dataUser = UserData('konto@pwr.edu.pl')
         print(self.dataUser.mail)
 
-        self.UiComponents()
+        self.ui_components()
         layout = QVBoxLayout()
         self.setLayout(layout)
         button1 = QPushButton('Wgląd do wyników hospitacji')
@@ -25,24 +25,24 @@ class MainWindow(QMainWindow):
 
         self.show()
 
-    def UiComponents(self):
+    def ui_components(self):
         # creating a push button
         button1 = QPushButton("Wgląd do wyników hospitacji", self)
         button2 = QPushButton("btn2", self)
 
-        btnMessage = QPushButton("Powiadomienia", self)
-        btnLogOut = QPushButton("Wyloguj się", self)
+        btn_message = QPushButton("Powiadomienia", self)
+        btn_log_out = QPushButton("Wyloguj się", self)
         label = QLabel(self.dataUser.mail, self)
 
         # setting geometry of button
         button1.setGeometry(PADDING_LEFT, BTN_HEIGHT*2, BTN_WIDTH, BTN_HEIGHT)
         button2.setGeometry(PADDING_LEFT, BTN_HEIGHT*3+PADDING, BTN_WIDTH, BTN_HEIGHT)
         label.move(WIN_WIDTH-(350+2*PADDING), PADDING)
-        btnMessage.move(WIN_WIDTH-(250+PADDING), PADDING)
-        btnLogOut.move(WIN_WIDTH -150, PADDING)
+        btn_message.move(WIN_WIDTH-(250+PADDING), PADDING)
+        btn_log_out.move(WIN_WIDTH -150, PADDING)
 
         # adding action to a button
-        #button.clicked.connect(self.clickme)
+        # button.clicked.connect(self.clickme)
 
     def add(self):
         pass

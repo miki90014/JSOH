@@ -19,7 +19,7 @@ class ProtocolList:
     def __init__(self, length):
         self.length = length
         self.list = []
-        for i in range(length):
+        for _ in range(length):
             self.list.append(Protocol())
 
 
@@ -106,6 +106,7 @@ def print_results(result):
     f.close()
     os.startfile(filename)
 
+
 def create_appeal_from_protocol(text, result):
 
     f = open(result.path_to_file, encoding="utf-8")
@@ -132,5 +133,6 @@ def create_appeal_from_protocol(text, result):
     f.write("\nData odowłania: " + str(date.today()))
     f.close()
 
-def send_accepted_protocol(filename):
+
+def send_accepted_protocol():
     pass
