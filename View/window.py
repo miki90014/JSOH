@@ -657,17 +657,26 @@ class MainWindow(QMainWindow):
     def view_and_sort_protocols(self):
         self.clear_in_frame_layout()
 
-        button_list = []
-
         frame = QFrame()
         frame.setFixedHeight(18)
         frame.setStyleSheet('border: 1px solid black')
 
-        self.in_frame_layout.addWidget(frame, 0, 0, 1, 6)
-        self.in_frame_layout.addWidget(QLabel('nr Protokołu'), 0, 0)
-        self.in_frame_layout.addWidget(QLabel('Prowadzący'), 0, 1)
-        self.in_frame_layout.addWidget(QLabel('Data hospitacji'), 0, 2)
-        self.in_frame_layout.addWidget(QLabel('Ocena pracownika'), 0, 3)
+        sort_list = QComboBox()
+        sort_list.addItems(['Brak', 'Rosnąco', 'Malejąco'])
+
+        sort_by_list = QComboBox()
+        sort_by_list.addItems(['nr Protokołu', 'Prowadzący', 'Data hospitacji', 'Ocena pracownika'])
+
+        self.in_frame_layout.addWidget(QLabel('Sortowanie: '), 0, 0)
+        self.in_frame_layout.addWidget(sort_list, 0, 1)
+        self.in_frame_layout.addWidget(QLabel('według: '), 0, 2)
+        self.in_frame_layout.addWidget(sort_by_list, 0, 3)
+
+        self.in_frame_layout.addWidget(frame, 1, 0, 1, 6)
+        self.in_frame_layout.addWidget(QLabel('nr Protokołu'), 1, 0)
+        self.in_frame_layout.addWidget(QLabel('Prowadzący'), 1, 1)
+        self.in_frame_layout.addWidget(QLabel('Data hospitacji'), 1, 2)
+        self.in_frame_layout.addWidget(QLabel('Ocena pracownika'), 1, 3)
 
         protocols = []
         path = f'{os.getcwd()}\\Protocols'
@@ -684,14 +693,29 @@ class MainWindow(QMainWindow):
                 protocol_number = os.path.basename(protocol).split('_')[1].split('.')[0]
                 protocols_in_dir[protocol_number] = json.load(file)
 
-        row = 1
-        for i in range(self.protocol_result_list.length):
-            button_list.append(QPushButton('Wypełnij'))
+        sort_list.currentIndexChanged.connect(partial(self.sort_by_chosen,
+                                                      order=sort_list,
+                                                      order_by=sort_by_list,
+                                                      protocols_to_sort=protocols_in_dir))
+        sort_by_list.currentIndexChanged.connect(partial(self.sort_by_chosen,
+                                                         order=sort_list,
+                                                         order_by=sort_by_list,
+                                                         protocols_to_sort=protocols_in_dir))
 
-        for number, protocol in protocols_in_dir.items():
+        self.view_sorted_protocols(protocols_in_dir)
+
+    def sort_by_chosen(self, order, order_by, protocols_to_sort):
+        order = order.currentText()
+        order_by = order_by.currentText()
+        print(f'{order_by} {order}')
+
+    def view_sorted_protocols(self, sorted_protocol_list):
+        row = 2
+
+        for number, protocol in sorted_protocol_list.items():
             self.in_frame_layout.addWidget(QLabel(number), row, 0)
             self.in_frame_layout.addWidget(QLabel(protocol['Prawadzący zajęcia/Jednostka organizacyjna']), row, 1)
             self.in_frame_layout.addWidget(QLabel(protocol['Data otrzymania']), row, 2)
-            self.in_frame_layout.addWidget(QLabel(protocol['Ocena merytoryczna']['Ocena końcowa'] + '(' +
+            self.in_frame_layout.addWidget(QLabel(protocol['Ocena merytoryczna']['Ocena końcowa'] + ' (' +
                                                   protocol['Ocena merytoryczna']['Średnia ocena zajęć'] + ')'), row, 3)
             row += 1
