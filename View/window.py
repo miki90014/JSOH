@@ -1,13 +1,11 @@
 import os
-import sys
 import json
 from datetime import date, datetime
 from functools import partial
 
 from PyQt6.QtCore import QSize
 from PyQt6.QtWidgets import *
-from PyQt6.QtGui import QColor, QPalette
-from Model.example_data import ProtocolResult, ProtocolResultList, print_results, \
+from Model.example_data import ProtocolResultList, print_results, \
     send_accepted_protocol, create_appeal_from_protocol, ProtocolList
 
 
@@ -195,7 +193,7 @@ class MainWindow(QMainWindow):
         self.in_frame_layout.addWidget(QLabel('Status'), 0, 3)
 
         row = 1
-        for i in range(len(self.protocol_result_list.list)):
+        for _ in range(len(self.protocol_result_list.list)):
             button_list.append(QPushButton('Wgląd'))
 
         for result in self.protocol_result_list.list:
@@ -236,56 +234,15 @@ class MainWindow(QMainWindow):
         f.close()
         self.in_frame_layout.addWidget(btn_back, 0, 3)
 
-        if(result.status == 'Do zaakceptowania'):
-            answerResults = QPushButton('Odpowiedz na wyniki')
-            answerResults.clicked.connect(lambda: self.answer_results(result))
-            self.in_frame_layout.addWidget(answerResults, 0,3)
+        if result.status == 'Do zaakceptowania':
+            answer_results = QPushButton('Odpowiedz na wyniki')
+            answer_results.clicked.connect(lambda: self.answer_results(result))
+            self.in_frame_layout.addWidget(answer_results, 0, 3)
         else:
             alert = QMessageBox()
-            alert.setText('Wyświetlany protokół zotsał zaakceptowany lub jest w trakcie odwołania. \nNie możesz podjąć żadnych akcji.')
+            alert.setText('Wyświetlany protokół zotsał zaakceptowany lub jest w trakcie odwołania.\n'
+                          'Nie możesz podjąć żadnych akcji.')
             alert.exec()
-
-    def answer_results(self, result):
-        self.clear_in_frame_layout()
-        btn_accept = QPushButton("Zaakceptuj")
-        btn_cancellation = QPushButton("Napisz odwołanie")
-        self.in_frame_layout.addWidget(QLabel("Czy chcesz zaakceptować wyniki?"), 0,0,2, 1)
-        self.in_frame_layout.addWidget(btn_accept, 1,0)
-        self.in_frame_layout.addWidget(btn_cancellation, 1, 1)
-        btn_accept.clicked.connect(partial(self.accept_results, result=result))
-        btn_cancellation.clicked.connect(partial(self.write_cancellation_results, result=result))
-
-    def accept_results(self, result):
-        self.clear_in_frame_layout()
-        btn_print = QPushButton("Wydrukuj protokół")
-        textEditor = QTextEdit()
-        btn_upload = QPushButton("Załącz plik")
-        btn_accept = QPushButton("Wyślij")
-        self.in_frame_layout.addWidget(btn_print, 1, 0)
-        self.in_frame_layout.addWidget(btn_upload, 1, 1)
-        self.in_frame_layout.addWidget(textEditor, 0, 0, 1, 3)
-        btn_print.clicked.connect(partial(print_results, result=result))
-        btn_upload.clicked.connect(partial(self.get_text_file, textEditor=textEditor, btn_accept=btn_accept))
-
-    def send_accepted_results(self, file_name):
-        self.clear_in_frame_layout()
-        send_accepted_protocol(file_name)
-
-    def get_text_file(self, textEditor, btn_accept):
-        file_name, _ = QFileDialog.getOpenFileName(self, 'Open Txt File', r"Protocols",
-                                                   "Text files (*.txt)")
-        if file_name.endswith('.txt'):
-            with open(file_name, 'r') as f:
-                data = f.read()
-                textEditor.setPlainText(data)
-                f.close()
-            self.in_frame_layout.addWidget(btn_accept, 1, 2)
-            btn_accept.clicked.connect(partial(self.send_accepted_results, file_name=file_name))
-        else:
-            pass
-
-    def write_cancellation_results(self, result):
-        self.clear_in_frame_layout()
 
     def view_protocols_to_fill(self):
         self.clear_in_frame_layout()
@@ -301,7 +258,7 @@ class MainWindow(QMainWindow):
         self.in_frame_layout.addWidget(QLabel('Data hospitacji'), 0, 2)
 
         row = 1
-        for i in range(self.protocol_list.length):
+        for _ in range(self.protocol_list.length):
             button_list.append(QPushButton('Wypełnij'))
 
         for result in self.protocol_list.list:
@@ -331,52 +288,38 @@ class MainWindow(QMainWindow):
         }
 
         file = folder + '\\protocol_' + str(result.id) + '.json'
+        for label, value in basic_info.items():
+            json_string[label] = value
 
-        with open(file, 'w', encoding="utf-8") as f:
-            # f.write('Protokół hospitacji nr: ' + str(result.id) + '\n')
-            # f.writelines([label + ' ' + value + '\n' for label, value in basic_info.items()])
-            for label, value in basic_info.items():
-                json_string[label] = value
+        json_string['Ocena formalna'] = {
 
-            # f.write('\nOcena formalna zajęć: \n\n')
-            json_string['Ocena formalna'] = {
+        }
+        for key, value in formal_mark.items():
+            key = key.split(':')[0]
 
-            }
-            for key, value in formal_mark.items():
-                key = key.split(':')[0]
-                # f.write(key)
+            for widget in value.children():
+                if isinstance(widget, QRadioButton):
+                    if widget.isChecked():
+                        json_string['Ocena formalna'][key] = widget.text()
+            if isinstance(value, QTextEdit):
+                json_string['Ocena formalna'][key] = value.toPlainText()
 
-                for widget in value.children():
-                    if isinstance(widget, QRadioButton):
-                        if widget.isChecked():
-                            # f.write(widget.text() + '\n')
-                            json_string['Ocena formalna'][key] = widget.text()
-                if isinstance(value, QTextEdit):
-                    # f.write(value.toPlainText() + '\n')
-                    json_string['Ocena formalna'][key] = value.toPlainText()
+        json_string['Ocena merytoryczna'] = {
 
-            # f.write('\nOcena merytoryczna zajęć: \n\n')
+        }
+        for key, value in substansive_mark.items():
+            key = key.split(':')[0]
 
-            json_string['Ocena merytoryczna'] = {
+            for widget in value.children():
+                if isinstance(widget, QRadioButton):
+                    if widget.isChecked():
+                        json_string['Ocena merytoryczna'][key] = widget.text()
 
-            }
-            for key, value in substansive_mark.items():
-                key = key.split(':')[0]
-                # f.write(key)
+            if isinstance(value, QTextEdit):
+                json_string['Ocena merytoryczna'][key] = value.toPlainText()
 
-                for widget in value.children():
-                    if isinstance(widget, QRadioButton):
-                        if widget.isChecked():
-                            # f.write(widget.text() + '\n')
-                            json_string['Ocena merytoryczna'][key] = widget.text()
-
-                if isinstance(value, QTextEdit):
-                    # f.write(value.toPlainText() + '\n')
-                    json_string['Ocena merytoryczna'][key] = value.toPlainText()
-
-                if isinstance(value, QLabel):
-                    # f.write(value.text() + '\n')
-                    json_string['Ocena merytoryczna'][key] = value.text()
+            if isinstance(value, QLabel):
+                json_string['Ocena merytoryczna'][key] = value.text()
 
         json_string['Status protokołu'] = 'Wypełniony'
         json_string['Data otrzymania'] = datetime.today().strftime('%Y-%m-%d')
@@ -404,7 +347,6 @@ class MainWindow(QMainWindow):
         self.in_frame_layout.addWidget(QLabel('Protokół hospitacji nr: '), 0, 0)
         self.in_frame_layout.addWidget(QLabel(str(result.id)), 0, 1)
 
-        # to be downloaded from database
         basic_info = [QLabel(f'Prawadzący zajęcia/Jednostka organizacyjna {"Jan Kowalski"}'),
                       QLabel(f'Nazwa kursu/kierunek studiów {"Projektowanie Oprogramowania"}'),
                       QLabel(f'Kod kursu {"KRK-054"}'),
@@ -525,7 +467,6 @@ class MainWindow(QMainWindow):
                                      'Panuje nad dynamiką grupy', 'Tworzy pozytywną atmosferę podczas zajęć',
                                      'Sprawnie posługuje się technicznymi środkami przekazu wiedzy']
 
-        # jeżeli wykład to:
         if result.form == 1:
             substansive_mark_template.extend(['Przekazuje aktualną wiedzę',
                                               'Przedstawia materiał w sposób zorganizowany i uporządkowany',
@@ -617,14 +558,14 @@ class MainWindow(QMainWindow):
     def accept_results(self, result):
         self.clear_in_frame_layout()
         btn_print = QPushButton("Wydrukuj protokół")
-        textEditor = QTextEdit()
+        text_editor = QTextEdit()
         btn_upload = QPushButton("Załącz plik")
         btn_accept = QPushButton("Wyślij")
         self.in_frame_layout.addWidget(btn_print, 1, 0)
         self.in_frame_layout.addWidget(btn_upload, 1, 1)
-        self.in_frame_layout.addWidget(textEditor, 0, 0, 1, 3)
+        self.in_frame_layout.addWidget(text_editor, 0, 0, 1, 3)
         btn_print.clicked.connect(partial(print_results, result=result))
-        btn_upload.clicked.connect(partial(self.get_text_file, textEditor=textEditor, btn_accept=btn_accept,
+        btn_upload.clicked.connect(partial(self.get_text_file, textEditor=text_editor, btn_accept=btn_accept,
                                            path=result.path_to_file))
 
     def send_accepted_results(self, file_name, path):
@@ -642,13 +583,13 @@ class MainWindow(QMainWindow):
         self.clear_in_frame_layout()
         send_accepted_protocol(file_name)
 
-    def get_text_file(self, textEditor, btn_accept, path):
+    def get_text_file(self, text_editor, btn_accept, path):
         file_name, _ = QFileDialog.getOpenFileName(self, 'Open Txt File', r"ProtocolsAccepted",
                                                    "Text files (*.txt)")
-        if(file_name.endswith('.txt')):
+        if file_name.endswith('.txt'):
             with open(file_name, 'r', encoding="utf-8") as f:
                 data = f.read()
-                textEditor.setPlainText(data)
+                text_editor.setPlainText(data)
                 f.close()
             self.in_frame_layout.addWidget(btn_accept, 1, 2)
             btn_accept.clicked.connect(partial(self.send_accepted_results, file_name=file_name, path=path))
@@ -672,7 +613,6 @@ class MainWindow(QMainWindow):
         create_appeal_from_protocol(text_editor.toPlainText(), result)
         self.protocol_result_list.list[self.protocol_result_list.get_index_by_id(result.id)].reload_data()
 
-
     def view_and_sort_protocols(self):
         self.clear_in_frame_layout()
 
@@ -686,14 +626,14 @@ class MainWindow(QMainWindow):
         sort_by_list = QComboBox()
         sort_by_list.addItems(['nr Protokołu', 'Prowadzący', 'Data hospitacji', 'Ocena pracownika'])
 
-        filter_list = QComboBox()
+        filter_list_semester = QComboBox()
 
         self.in_frame_layout.addWidget(QLabel('Sortowanie: '), 0, 0)
         self.in_frame_layout.addWidget(sort_list, 0, 1)
         self.in_frame_layout.addWidget(QLabel('według: '), 0, 2)
         self.in_frame_layout.addWidget(sort_by_list, 0, 3)
         self.in_frame_layout.addWidget(QLabel('dotyczące semestru: '), 0, 4)
-        self.in_frame_layout.addWidget(filter_list, 0, 5)
+        self.in_frame_layout.addWidget(filter_list_semester, 0, 5)
 
         self.in_frame_layout.addWidget(frame, 1, 0, 1, 6)
         self.in_frame_layout.addWidget(QLabel('nr Protokołu'), 1, 0)
@@ -722,23 +662,23 @@ class MainWindow(QMainWindow):
             if temp not in all_semesters:
                 all_semesters.append(temp)
 
-        filter_list.addItems(all_semesters)
+        filter_list_semester.addItems(all_semesters)
 
         sort_list.currentIndexChanged.connect(partial(self.sort_by_chosen,
                                                       order=sort_list,
                                                       order_by=sort_by_list,
                                                       protocols_to_sort=protocols_in_dir,
-                                                      number=filter_list))
+                                                      number=filter_list_semester))
         sort_by_list.currentIndexChanged.connect(partial(self.sort_by_chosen,
                                                          order=sort_list,
                                                          order_by=sort_by_list,
                                                          protocols_to_sort=protocols_in_dir,
-                                                         number=filter_list))
-        filter_list.currentIndexChanged.connect(partial(self.sort_by_chosen,
-                                                        order=sort_list,
-                                                        order_by=sort_by_list,
-                                                        protocols_to_sort=protocols_in_dir,
-                                                        number=filter_list))
+                                                         number=filter_list_semester))
+        filter_list_semester.currentIndexChanged.connect(partial(self.sort_by_chosen,
+                                                                 order=sort_list,
+                                                                 order_by=sort_by_list,
+                                                                 protocols_to_sort=protocols_in_dir,
+                                                                 number=filter_list_semester))
 
         self.view_sorted_protocols(protocols_in_dir)
 
