@@ -69,3 +69,4 @@ CREATE TABLE Kocury (
     plec VARCHAR2(1) CONSTRAINT kc_pl_ch CHECK (plec IN ('D', 'M')),
 ```
 ...
+----
