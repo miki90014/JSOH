@@ -9,7 +9,7 @@ from PyQt6.QtCore import QSize, Qt, QDir
 from PyQt6.QtWidgets import *
 from PyQt6.QtGui import QColor, QPalette
 from Model.example_data import ProtocolResult, ProtocolResultList, print_results, \
-    send_accepted_protocol, create_appeal_from_protocol
+    send_accepted_protocol, create_appeal_from_protocol, ProtocolList
 
 
 def create_yes_no_radio_buttons():
@@ -78,7 +78,9 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle('JSOH')
         # for now
-        self.protocol_result_list = ProtocolResultList(20)
+        self.protocol_result_list = ProtocolResultList(99)
+
+        self.protocol_list = ProtocolList(20)
 
         self.main_layout = QGridLayout()
 
@@ -174,37 +176,48 @@ class MainWindow(QMainWindow):
         self.in_frame_layout.addWidget(QLabel('Status'), 0, 3)
 
         row = 1
-        for i in range(self.protocol_result_list.length):
+        for i in range(len(self.protocol_result_list.list)):
             button_list.append(QPushButton('Wgląd'))
 
         for result in self.protocol_result_list.list:
             self.in_frame_layout.addWidget(QLabel(str(result.id)), row, 0)
             self.in_frame_layout.addWidget(QLabel(str(result.received_date)), row, 1)
             self.in_frame_layout.addWidget(QLabel(str(result.accepted_date)), row, 2)
-            match str(result.status):
-                case '0':
-                    self.in_frame_layout.addWidget(QLabel('Zaakceptowany'), row, 3)
-                case '1':
-                    self.in_frame_layout.addWidget(QLabel('Do zaakceptowania'), row, 3)
-                case '2':
-                    self.in_frame_layout.addWidget(QLabel('W trakcie odwołania'), row, 3)
-                case '3':
-                    self.in_frame_layout.addWidget(QLabel('Protokół zaakceptowany po odwołaniu'), row, 3)
-            #button_list[row-1].clicked.connect(lambda: self.view_specific_protocol(result))
-            button_list[row - 1].clicked.connect(partial(self.view_specific_protocol, result=result))
+            self.in_frame_layout.addWidget(QLabel(str(result.status)), row, 3)
+
+            button_list[row - 1].clicked.connect(partial(self.view_specific_protocolc, result=result))
             self.in_frame_layout.addWidget(button_list[row-1], row, 4)
             row += 1
 
-    def view_specific_protocol(self, result):
+    def view_specific_protocolc(self, result):
         self.clear_in_frame_layout()
         btn_back = QPushButton("Wróć do listy")
         btn_back.clicked.connect(self.view_protocol_results)
 
-        self.in_frame_layout.addWidget(QLabel('Protokół hospitacji nr: '), 0, 0)
-        self.in_frame_layout.addWidget(QLabel(str(result.id)), 0, 1)
-        self.in_frame_layout.addWidget(btn_back, 0,2)
+        row = 0
+        f = open(result.path_to_file, encoding="utf-8")
+        data = json.load(f)
+        for label in data:
+            self.in_frame_layout.addWidget(QLabel(str(label)), row, 0)
+            if str(label) == "Ocena formalna":
+                row += 1
+                for l in data["Ocena formalna"]:
+                    self.in_frame_layout.addWidget(QLabel(str(l)), row, 1)
+                    self.in_frame_layout.addWidget(QLabel(str(data["Ocena formalna"][str(l)])), row, 2)
+                    row += 1
+            elif str(label) == "Ocena merytoryczna":
+                row += 1
+                for l in data["Ocena formalna"]:
+                    self.in_frame_layout.addWidget(QLabel(str(l)), row, 1)
+                    self.in_frame_layout.addWidget(QLabel(str(data["Ocena formalna"][str(l)])), row, 2)
+                    row += 1
+            else:
+                self.in_frame_layout.addWidget(QLabel(str(data[str(label)])), row, 1)
+            row += 1
+        f.close()
+        self.in_frame_layout.addWidget(btn_back, 0, 3)
 
-        if(result.status==1):
+        if(result.status == 'Do zaakceptowania'):
             answerResults = QPushButton('Odpowiedz na wyniki')
             answerResults.clicked.connect(lambda: self.answer_results(result))
             self.in_frame_layout.addWidget(answerResults, 0,3)
@@ -269,10 +282,10 @@ class MainWindow(QMainWindow):
         self.in_frame_layout.addWidget(QLabel('Data hospitacji'), 0, 2)
 
         row = 1
-        for i in range(self.protocol_result_list.length):
+        for i in range(self.protocol_list.length):
             button_list.append(QPushButton('Wypełnij'))
 
-        for result in self.protocol_result_list.list:
+        for result in self.protocol_list.list:
             self.in_frame_layout.addWidget(QLabel(str(result.id)), row, 0)
             self.in_frame_layout.addWidget(QLabel("Jan Kowalski"), row, 1)
             self.in_frame_layout.addWidget(QLabel('2023-01-14'), row, 2)
@@ -349,8 +362,7 @@ class MainWindow(QMainWindow):
 
         json_string['Status protokołu'] = 'Wypełniony'
         json_string['Data otrzymania'] = datetime.today().strftime('%Y-%m-%d')
-        json_string['Nr akceptacji'] = ''
-        json_string['Nr odwołania'] = ''
+        json_string['Data akceptacji'] = ''
 
         alert = QMessageBox()
         alert.setText('Zapisano protokół')
@@ -613,26 +625,33 @@ class MainWindow(QMainWindow):
         self.in_frame_layout.addWidget(textEditor, 0, 0, 1, 3)
         btn_print.clicked.connect(partial(print_results, result=result))
         btn_upload.clicked.connect(partial(self.get_text_file, textEditor=textEditor, btn_accept=btn_accept,
-                                           id_pro=result.id))
+                                           path=result.path_to_file))
 
-    def send_accepted_results(self, file_name, id_pro):
-        f = open(file_name, "a")
-        f.writelines("\nData akceptacji: "+str(date.today()))
+    def send_accepted_results(self, file_name, path):
+        f = open(path, encoding="utf-8")
+        data = json.load(f)
         f.close()
-        self.protocol_result_list.list[self.protocol_result_list.get_index_by_id(id_pro)].status = 0
+        f = open(path, "w", encoding="utf-8")
+        data["Status protokołu"] = "Zaakceptowany"
+        data["Nr akceptacji"] = data["Nr protokołu"]
+        data["Data akceptacji"] = str(date.today())
+        json.dump(data, f, ensure_ascii=False, indent=4)
+        f.close()
+        self.protocol_result_list.list[self.protocol_result_list.get_index_by_id(data["Nr protokołu"])].reload_data()
+
         self.clear_in_frame_layout()
         send_accepted_protocol(file_name)
 
-    def get_text_file(self, textEditor, btn_accept, id_pro):
+    def get_text_file(self, textEditor, btn_accept, path):
         file_name, _ = QFileDialog.getOpenFileName(self, 'Open Txt File', r"ProtocolsAccepted",
                                                    "Text files (*.txt)")
         if(file_name.endswith('.txt')):
-            with open(file_name, 'r') as f:
+            with open(file_name, 'r', encoding="utf-8") as f:
                 data = f.read()
                 textEditor.setPlainText(data)
                 f.close()
             self.in_frame_layout.addWidget(btn_accept, 1, 2)
-            btn_accept.clicked.connect(partial(self.send_accepted_results, file_name=file_name, id_pro=id_pro))
+            btn_accept.clicked.connect(partial(self.send_accepted_results, file_name=file_name, path=path))
         else:
             pass
 
@@ -650,6 +669,7 @@ class MainWindow(QMainWindow):
 
     def send_appeal_from_protocol_results(self, result, text_editor):
         self.clear_in_frame_layout()
-        self.protocol_result_list.list[self.protocol_result_list.get_index_by_id(result.id)].status = 2
         create_appeal_from_protocol(text_editor.toPlainText(), result)
+        self.protocol_result_list.list[self.protocol_result_list.get_index_by_id(result.id)].reload_data()
+
 
