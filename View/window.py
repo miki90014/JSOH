@@ -1,7 +1,8 @@
 import copy
 import os
 import sys
-from datetime import date
+import json
+from datetime import date, datetime
 from functools import partial
 
 from PyQt6.QtCore import QSize, Qt, QDir
@@ -293,41 +294,70 @@ class MainWindow(QMainWindow):
         if not os.path.exists(folder):
             os.mkdir(folder)
 
-        file = folder + '\\protocol_' + str(result.id) + '.txt'
+        json_string = {
+            'Nr protokołu': f'{result.id}',
+            'Nr hospitacji': f'unknown',
+        }
+
+        file = folder + '\\protocol_' + str(result.id) + '.json'
 
         with open(file, 'w', encoding="utf-8") as f:
-            f.write('Protokół hospitacji nr: ' + str(result.id) + '\n')
-            f.writelines([label.text() + '\n' for label in basic_info])
+            # f.write('Protokół hospitacji nr: ' + str(result.id) + '\n')
+            # f.writelines([label + ' ' + value + '\n' for label, value in basic_info.items()])
+            for label, value in basic_info.items():
+                json_string[label] = value
 
-            f.write('\nOcena formalna zajęć: \n\n')
+            # f.write('\nOcena formalna zajęć: \n\n')
+            json_string['Ocena formalna'] = {
+
+            }
             for key, value in formal_mark.items():
-                f.write(key)
+                key = key.split(':')[0]
+                # f.write(key)
 
                 for widget in value.children():
                     if isinstance(widget, QRadioButton):
                         if widget.isChecked():
-                            f.write(widget.text() + '\n')
+                            # f.write(widget.text() + '\n')
+                            json_string['Ocena formalna'][key] = widget.text()
                 if isinstance(value, QTextEdit):
-                    f.write(value.toPlainText() + '\n')
+                    # f.write(value.toPlainText() + '\n')
+                    json_string['Ocena formalna'][key] = value.toPlainText()
 
-            f.write('\nOcena merytoryczna zajęć: \n\n')
+            # f.write('\nOcena merytoryczna zajęć: \n\n')
 
+            json_string['Ocena merytoryczna'] = {
+
+            }
             for key, value in substansive_mark.items():
-                f.write(key)
+                key = key.split(':')[0]
+                # f.write(key)
 
                 for widget in value.children():
                     if isinstance(widget, QRadioButton):
                         if widget.isChecked():
-                            f.write(widget.text() + '\n')
+                            # f.write(widget.text() + '\n')
+                            json_string['Ocena merytoryczna'][key] = widget.text()
 
                 if isinstance(value, QTextEdit):
-                    f.write(value.toPlainText() + '\n')
+                    # f.write(value.toPlainText() + '\n')
+                    json_string['Ocena merytoryczna'][key] = value.toPlainText()
 
                 if isinstance(value, QLabel):
-                    f.write(value.text() + '\n')
+                    # f.write(value.text() + '\n')
+                    json_string['Ocena merytoryczna'][key] = value.text()
+
+        json_string['Status protokołu'] = 'Wypełniony'
+        json_string['Data otrzymania'] = datetime.today().strftime('%Y-%m-%d')
+        json_string['Nr akceptacji'] = ''
+        json_string['Nr odwołania'] = ''
 
         alert = QMessageBox()
         alert.setText('Zapisano protokół')
+
+        with open(file, 'w', encoding='utf-8') as f:
+            json.dump(json_string, f, ensure_ascii=False, indent=4)
+
         alert.exec()
         self.view_protocols_to_fill()
 
@@ -338,7 +368,7 @@ class MainWindow(QMainWindow):
         btn_back.clicked.connect(self.stop_filling_protocol)
 
         btn_accept = QPushButton("Zaakceptuj protokół")
-        btn_accept.clicked.connect(lambda: self.save_protocol(result, basic_info, formal_mark_dict,
+        btn_accept.clicked.connect(lambda: self.save_protocol(result, basic_info_for_save, formal_mark_dict,
                                                               substansive_mark_dict))
 
         self.in_frame_layout.addWidget(QLabel('Protokół hospitacji nr: '), 0, 0)
@@ -354,6 +384,18 @@ class MainWindow(QMainWindow):
                       QLabel(f'Semestr {str(5)}'),
                       QLabel(f'Miejsce i termin zajęć {"Budynek D2, sala 152, wt 13:15-14:45"}'),
                       QLabel(f'Srodowisko realizacji zajęć {"Nie dotyczy"}')]
+
+        basic_info_for_save = {
+            'Prawadzący zajęcia/Jednostka organizacyjna': "Jan Kowalski",
+            'Nazwa kursu/kierunek studiów': "Projektowanie Oprogramowania",
+            'Kod kursu': "KRK-054",
+            'Forma dydaktyczna': "",
+            'Sposób realizacji': "tradycyjny",
+            'Stopień i forma studiów': "I stopień",
+            'Semestr': str(5),
+            'Miejsce i termin zajęć': "Budynek D2, sala 152, wt 13:15-14:45",
+            'Srodowisko realizacji zajęć': "Nie dotyczy"
+        }
 
         row = 1
         for info in basic_info:
