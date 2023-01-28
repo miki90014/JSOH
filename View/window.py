@@ -72,6 +72,20 @@ def calculate_avg(substansive_mark_dict, label):
     label.setText(str(round(value/total, 2)))
 
 
+def sorter(item):
+    sort_by = item[1]['Ocena merytoryczna']['Ocena końcowa']
+    if sort_by == 'negatywna':
+        return 1
+    elif sort_by == 'dostateczna':
+        return 2
+    elif sort_by == 'dobra':
+        return 3
+    elif sort_by == 'bardzo dobra':
+        return 4
+    else:
+        return 5
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -706,16 +720,43 @@ class MainWindow(QMainWindow):
 
     def sort_by_chosen(self, order, order_by, protocols_to_sort):
         order = order.currentText()
+        if order == 'Brak':
+            self.view_sorted_protocols(protocols_to_sort)
+            return False
+        order = False if order == 'Rosnąco' else True
         order_by = order_by.currentText()
         print(f'{order_by} {order}')
+        if order_by == 'nr Protokołu':
+            sorted_protocols = sorted(protocols_to_sort.items(),
+                                      key=lambda item: item[1]
+                                                           ['Nr protokołu'],
+                                      reverse=order)
+        if order_by == 'Prowadzący':
+            sorted_protocols = sorted(protocols_to_sort.items(),
+                                      key=lambda item: item[1]
+                                                           ['Prawadzący zajęcia/Jednostka organizacyjna'],
+                                      reverse=order)
+        if order_by == 'Data hospitacji':
+            sorted_protocols = sorted(protocols_to_sort.items(),
+                                      key=lambda item: item[1]
+                                                           ['Data otrzymania'],
+                                      reverse=order)
+        if order_by == 'Ocena pracownika':
+            sorted_protocols = sorted(protocols_to_sort.items(),
+                                      key=lambda item: sorter(item),
+                                      reverse=order)
+        sorted_protocols = dict(sorted_protocols)
+        self.view_sorted_protocols(sorted_protocols)
 
     def view_sorted_protocols(self, sorted_protocol_list):
+        for i in range(self.in_frame_layout.count() - 1, -1, -1):
+            if i >= 9:
+                self.in_frame_layout.itemAt(i).widget().setParent(None)
         row = 2
 
         for number, protocol in sorted_protocol_list.items():
             self.in_frame_layout.addWidget(QLabel(number), row, 0)
             self.in_frame_layout.addWidget(QLabel(protocol['Prawadzący zajęcia/Jednostka organizacyjna']), row, 1)
             self.in_frame_layout.addWidget(QLabel(protocol['Data otrzymania']), row, 2)
-            self.in_frame_layout.addWidget(QLabel(protocol['Ocena merytoryczna']['Ocena końcowa'] + ' (' +
-                                                  protocol['Ocena merytoryczna']['Średnia ocena zajęć'] + ')'), row, 3)
+            self.in_frame_layout.addWidget(QLabel(protocol['Ocena merytoryczna']['Ocena końcowa']), row, 3)
             row += 1
