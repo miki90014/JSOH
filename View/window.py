@@ -1,11 +1,10 @@
-import copy
 import os
 import sys
 import json
 from datetime import date, datetime
 from functools import partial
 
-from PyQt6.QtCore import QSize, Qt, QDir
+from PyQt6.QtCore import QSize
 from PyQt6.QtWidgets import *
 from PyQt6.QtGui import QColor, QPalette
 from Model.example_data import ProtocolResult, ProtocolResultList, print_results, \
@@ -72,6 +71,25 @@ def calculate_avg(substansive_mark_dict, label):
     label.setText(str(round(value/total, 2)))
 
 
+def sorter(item):
+    sort_by = item[1]['Ocena merytoryczna']['Ocena końcowa']
+    if sort_by == 'negatywna':
+        return 1
+    elif sort_by == 'dostateczna':
+        return 2
+    elif sort_by == 'dobra':
+        return 3
+    elif sort_by == 'bardzo dobra':
+        return 4
+    else:
+        return 5
+
+
+def filter_list(protocols_to_filter: dict, number):
+    filtered = {key: value for key, value in protocols_to_filter.items() if value['Semestr'] == number}
+    return filtered
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -133,15 +151,16 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(widget)
 
-        # example of how connection will be working
-        self.right_side_menu_button_list[2].clicked.connect(self.view_protocol_results)
         self.right_side_menu_button_list[1].clicked.connect(self.view_protocols_to_fill)
+        self.right_side_menu_button_list[2].clicked.connect(self.view_protocol_results)
+        self.right_side_menu_button_list[3].clicked.connect(self.view_and_sort_protocols)
 
         self.hide_all_right_side_menu_button_list()
         self.right_side_menu_button_list[0].show()
         self.right_side_menu_button_list[1].show()
 
     def on_login_list_change(self, value):
+        self.clear_in_frame_layout()
         self.hide_all_right_side_menu_button_list()
         if value == 0:
             self.right_side_menu_button_list[0].show()
@@ -291,7 +310,6 @@ class MainWindow(QMainWindow):
             self.in_frame_layout.addWidget(QLabel('2023-01-14'), row, 2)
             self.in_frame_layout.addWidget(QLabel('Do Wypełnienia'), row, 3)
             self.in_frame_layout.addWidget(QLabel('Wykład' if result.form == 1 else 'Inny'), row, 4)
-            # button_list[row-1].clicked.connect(lambda: self.view_specific_protocol(result))
             button_list[row - 1].clicked.connect(partial(self.fill_protocol, result=result))
             self.in_frame_layout.addWidget(button_list[row - 1], row, 5)
             row += 1
@@ -586,24 +604,6 @@ class MainWindow(QMainWindow):
         row += 1
         return row
 
-    def view_specific_protocol(self, result):
-        self.clear_in_frame_layout()
-        btn_back = QPushButton("Wróć do listy")
-        btn_back.clicked.connect(self.view_protocol_results)
-
-        self.in_frame_layout.addWidget(QLabel('Protokół hospitacji nr: '), 0, 0)
-        self.in_frame_layout.addWidget(QLabel(str(result.id)), 0, 1)
-        self.in_frame_layout.addWidget(btn_back, 0,2)
-
-        if(result.status==1):
-            answerResults = QPushButton('Odpowiedz na wyniki')
-            answerResults.clicked.connect(lambda: self.answer_results(result))
-            self.in_frame_layout.addWidget(answerResults, 0,3)
-        else:
-            alert = QMessageBox()
-            alert.setText('Wyświetlany protokół zotsał zaakceptowany lub jest w trakcie odwołania. \nNie możesz podjąć żadnych akcji.')
-            alert.exec()
-
     def answer_results(self, result):
         self.clear_in_frame_layout()
         btn_accept = QPushButton("Zaakceptuj")
@@ -673,3 +673,120 @@ class MainWindow(QMainWindow):
         self.protocol_result_list.list[self.protocol_result_list.get_index_by_id(result.id)].reload_data()
 
 
+    def view_and_sort_protocols(self):
+        self.clear_in_frame_layout()
+
+        frame = QFrame()
+        frame.setFixedHeight(18)
+        frame.setStyleSheet('border: 1px solid black')
+
+        sort_list = QComboBox()
+        sort_list.addItems(['Brak', 'Rosnąco', 'Malejąco'])
+
+        sort_by_list = QComboBox()
+        sort_by_list.addItems(['nr Protokołu', 'Prowadzący', 'Data hospitacji', 'Ocena pracownika'])
+
+        filter_list = QComboBox()
+
+        self.in_frame_layout.addWidget(QLabel('Sortowanie: '), 0, 0)
+        self.in_frame_layout.addWidget(sort_list, 0, 1)
+        self.in_frame_layout.addWidget(QLabel('według: '), 0, 2)
+        self.in_frame_layout.addWidget(sort_by_list, 0, 3)
+        self.in_frame_layout.addWidget(QLabel('dotyczące semestru: '), 0, 4)
+        self.in_frame_layout.addWidget(filter_list, 0, 5)
+
+        self.in_frame_layout.addWidget(frame, 1, 0, 1, 6)
+        self.in_frame_layout.addWidget(QLabel('nr Protokołu'), 1, 0)
+        self.in_frame_layout.addWidget(QLabel('Prowadzący'), 1, 1)
+        self.in_frame_layout.addWidget(QLabel('Data hospitacji'), 1, 2)
+        self.in_frame_layout.addWidget(QLabel('Ocena pracownika'), 1, 3)
+
+        protocols = []
+        path = f'{os.getcwd()}\\Protocols'
+        for r, d, f in os.walk(path):
+            for file in f:
+                if '.json' in file:
+                    protocols.append(os.path.join(r, file))
+
+        protocols_in_dir = {
+
+        }
+        for protocol in protocols:
+            with open(protocol, 'r', encoding='utf-8') as file:
+                protocol_number = os.path.basename(protocol).split('_')[1].split('.')[0]
+                protocols_in_dir[protocol_number] = json.load(file)
+
+        all_semesters = ['Brak']
+        for _, protocol in protocols_in_dir.items():
+            temp = protocol['Semestr']
+            if temp not in all_semesters:
+                all_semesters.append(temp)
+
+        filter_list.addItems(all_semesters)
+
+        sort_list.currentIndexChanged.connect(partial(self.sort_by_chosen,
+                                                      order=sort_list,
+                                                      order_by=sort_by_list,
+                                                      protocols_to_sort=protocols_in_dir,
+                                                      number=filter_list))
+        sort_by_list.currentIndexChanged.connect(partial(self.sort_by_chosen,
+                                                         order=sort_list,
+                                                         order_by=sort_by_list,
+                                                         protocols_to_sort=protocols_in_dir,
+                                                         number=filter_list))
+        filter_list.currentIndexChanged.connect(partial(self.sort_by_chosen,
+                                                        order=sort_list,
+                                                        order_by=sort_by_list,
+                                                        protocols_to_sort=protocols_in_dir,
+                                                        number=filter_list))
+
+        self.view_sorted_protocols(protocols_in_dir)
+
+    def sort_by_chosen(self, order, order_by, protocols_to_sort, number):
+        order = order.currentText()
+        order_by = order_by.currentText()
+        number = number.currentText()
+        if number != 'Brak':
+            protocols_to_sort = filter_list(protocols_to_sort, number)
+        if order == 'Brak':
+            self.view_sorted_protocols(protocols_to_sort)
+            return False
+        order = False if order == 'Rosnąco' else True
+        if order_by == 'nr Protokołu':
+            sorted_protocols = sorted(protocols_to_sort.items(),
+                                      key=lambda item: item[1]
+                                                           ['Nr protokołu'],
+                                      reverse=order)
+        elif order_by == 'Prowadzący':
+            sorted_protocols = sorted(protocols_to_sort.items(),
+                                      key=lambda item: item[1]
+                                                           ['Prawadzący zajęcia/Jednostka organizacyjna'],
+                                      reverse=order)
+        elif order_by == 'Data hospitacji':
+            sorted_protocols = sorted(protocols_to_sort.items(),
+                                      key=lambda item: item[1]
+                                                           ['Data otrzymania'],
+                                      reverse=order)
+        elif order_by == 'Ocena pracownika':
+            sorted_protocols = sorted(protocols_to_sort.items(),
+                                      key=lambda item: sorter(item),
+                                      reverse=order)
+        else:
+            sorted_protocols = {
+
+            }
+        sorted_protocols = dict(sorted_protocols)
+        self.view_sorted_protocols(sorted_protocols)
+
+    def view_sorted_protocols(self, sorted_protocol_list):
+        for i in range(self.in_frame_layout.count() - 1, -1, -1):
+            if i >= 9:
+                self.in_frame_layout.itemAt(i).widget().setParent(None)
+        row = 2
+
+        for number, protocol in sorted_protocol_list.items():
+            self.in_frame_layout.addWidget(QLabel(number), row, 0)
+            self.in_frame_layout.addWidget(QLabel(protocol['Prawadzący zajęcia/Jednostka organizacyjna']), row, 1)
+            self.in_frame_layout.addWidget(QLabel(protocol['Data otrzymania']), row, 2)
+            self.in_frame_layout.addWidget(QLabel(protocol['Ocena merytoryczna']['Ocena końcowa']), row, 3)
+            row += 1
