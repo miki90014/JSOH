@@ -673,15 +673,21 @@ class MainWindow(QMainWindow):
         with open(file_path) as schedule_temp:
             data_from_file = json.load(schedule_temp)
             list_obj = data_from_file
-            list_obj.append(data)
+            if data not in list_obj:
+                list_obj.append(data)
+                with open(file_path, 'w') as schedule_temp:
+                    json.dump(list_obj, schedule_temp)
 
-        with open(file_path, 'w') as schedule_temp:
-            json.dump(list_obj, schedule_temp)
-
-        self.in_frame_layout.addWidget(QLabel("Zajęcia zostały dodane do listy"), 0, 0, 2, 1)
-        btn_close = QPushButton("Zamknij")
-        btn_close.clicked.connect(self.develop_schedule)
-        self.in_frame_layout.addWidget(btn_close, 1, 0)
+                self.in_frame_layout.addWidget(QLabel("Zajęcia zostały dodane do listy"), 0, 0, 2, 1)
+                btn_close = QPushButton("Zamknij")
+                btn_close.clicked.connect(self.develop_schedule)
+                self.in_frame_layout.addWidget(btn_close, 1, 0)
+            else:
+                self.clear_in_frame_layout()
+                self.in_frame_layout.addWidget(QLabel("Podane zajęcia już są w wykazie zajęć!"), 0, 0, 2, 1)
+                btn_close = QPushButton("Zamknij")
+                btn_close.clicked.connect(self.develop_schedule)
+                self.in_frame_layout.addWidget(btn_close, 1, 0)
 
     def remove_from_schedule(self, data):
         self.clear_in_frame_layout()
@@ -777,10 +783,6 @@ class MainWindow(QMainWindow):
             button_list.append(QPushButton('Dodaj'))
 
         for result in data:
-            print("Classes:"+ result["PracownikID"])
-            print(employee)
-            print(employee["ID"])
-            print(str(result["PracownikID"]) == str(employee["ID"]))
             if str(result["PracownikID"]) == str(employee["ID"]):
                 employee_name = employee["Imie"] + " " + employee["Nazwisko"]
                 self.in_frame_layout.addWidget(QLabel(str(employee_name)), row, 0)

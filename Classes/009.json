@@ -1,10 +1,10 @@
 {
-"ID":"001",
-"KursID":"001",
-"PracownikID": "001",
+"ID":"009",
+"KursID":"009",
+"PracownikID": "005",
 "Miejsce i termin zajec":"wt 15, C-2, s.329",
 "Srodowisko realizacji zajec":null,
 "TypZajec":null,
-"Kod grupy":"K01-35k",
+"Kod grupy":"K01-35i",
 "Nazwa":"Bazy danych"
 }
