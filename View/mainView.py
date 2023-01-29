@@ -39,7 +39,7 @@ class MainWindow(QMainWindow):
         button2.setGeometry(PADDING_LEFT, BTN_HEIGHT*3+PADDING, BTN_WIDTH, BTN_HEIGHT)
         label.move(WIN_WIDTH-(350+2*PADDING), PADDING)
         btn_message.move(WIN_WIDTH-(250+PADDING), PADDING)
-        btn_log_out.move(WIN_WIDTH -150, PADDING)
+        btn_log_out.move(WIN_WIDTH - 150, PADDING)
 
         # adding action to a button
         # button.clicked.connect(self.clickme)
