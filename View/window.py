@@ -617,21 +617,21 @@ class MainWindow(QMainWindow):
         self.protocol_result_list.list[self.protocol_result_list.get_index_by_id(result.id)].status = 2
         create_appeal_from_protocol(text_editor.toPlainText(), result)
 
-    def read_scheduled_inspections(self):
-        inspections_data = []
-        path_to_json = 'Inspections/'
+    def read_data(self, path_to_json):
+        data = []
         json_files = [pos_json for pos_json in os.listdir(path_to_json) if pos_json.endswith('.json')]
         for file in json_files:
-            data = json.load(open(path_to_json + "/" + file))
-            inspections_data.append(data)
-
-        return inspections_data
+            new_data = json.load(open(path_to_json + "/" + file))
+            data.append(new_data)
+        return data
 
     def view_scheduled_inspection(self):
         self.clear_in_frame_layout()
-        data = self.read_scheduled_inspections()
+        path_to_json = 'Inspections/'
+        data = self.read_data(path_to_json)
         frame = QFrame()
         frame.setStyleSheet('border: 1px solid black')
+        btn_cancellation = QPushButton("Anuluj")
 
         self.in_frame_layout.addWidget(frame, 0, 0, 1, 8)
         self.in_frame_layout.addWidget(QLabel('Data hospitacji'), 0, 0)
@@ -660,10 +660,183 @@ class MainWindow(QMainWindow):
             self.in_frame_layout.addWidget(QLabel(str(team[:-2])), row, 6)
             self.in_frame_layout.addWidget(QLabel(str(result['Status'])), row, 7)
             row += 1
+        self.in_frame_layout.addWidget(btn_cancellation, row, 7)
+        btn_cancellation.clicked.connect(self.clear_in_frame_layout)
 
+    def add_to_schedule(self, employee, classes):
+        self.clear_in_frame_layout()
+        data = {"Data ostatniej hospitacji":employee["Data ostatniej hospitacji"],"Hospitowany":employee["Imie"] + " " + employee["Nazwisko"],"Nazwa kursu":classes["Nazwa"],"Kod grupy":classes["Kod grupy"]}
+
+        list_obj = []
+        file_path = 'Schedules/schedule_temp.json'
+
+        with open(file_path) as schedule_temp:
+            data_from_file = json.load(schedule_temp)
+            list_obj = data_from_file
+            list_obj.append(data)
+
+        with open(file_path, 'w') as schedule_temp:
+            json.dump(list_obj, schedule_temp)
+
+        self.in_frame_layout.addWidget(QLabel("Zajęcia zostały dodane do listy"), 0, 0, 2, 1)
+        btn_close = QPushButton("Zamknij")
+        btn_close.clicked.connect(self.develop_schedule)
+        self.in_frame_layout.addWidget(btn_close, 1, 0)
+
+    def remove_from_schedule(self, data):
+        self.clear_in_frame_layout()
+
+        list_obj = []
+        file_path = 'Schedules/schedule_temp.json'
+
+        with open(file_path) as schedule_temp:
+            data_from_file = json.load(schedule_temp)
+            list_obj = data_from_file
+            list_obj.remove(data)
+
+        with open(file_path, 'w') as schedule_temp:
+            json.dump(list_obj, schedule_temp)
+
+        self.in_frame_layout.addWidget(QLabel("Zajęcia zostały usunięte z listy"), 0, 0, 2, 1)
+        btn_close = QPushButton("Zamknij")
+        btn_close.clicked.connect(self.develop_schedule)
+        self.in_frame_layout.addWidget(btn_close, 1, 0)
+
+    def accept_schedule(self):
+        self.clear_in_frame_layout()
+
+        list_obj = []
+        file_path = 'Schedules/schedule_temp.json'
+        final_file_path = 'Schedules/schedule.json'
+
+        with open(file_path) as schedule_temp:
+            data_from_file = json.load(schedule_temp)
+            list_obj = data_from_file
+
+        with open(final_file_path, 'w') as schedule:
+            json.dump(list_obj, schedule)
+
+        list_obj = []
+
+        with open(file_path, 'w') as schedule_temp:
+            json.dump(list_obj, schedule_temp)
+
+        self.in_frame_layout.addWidget(QLabel("Wykaz zajęć do hospitacji został zatwierdzony"), 0, 0, 2, 1)
+        btn_close = QPushButton("Zamknij")
+        btn_close.clicked.connect(self.develop_schedule)
+        self.in_frame_layout.addWidget(btn_close, 1, 0)
+
+    def add_employee(self):
+        self.clear_in_frame_layout()
+        path_to_json = 'Employees/'
+        data = self.read_data(path_to_json)
+        button_list = []
+        frame = QFrame()
+        frame.setStyleSheet('border: 1px solid black')
+        btn_cancellation = QPushButton("Anuluj")
+
+        self.in_frame_layout.addWidget(frame, 0, 0, 1, 5)
+        self.in_frame_layout.addWidget(QLabel('ID'), 0, 0)
+        self.in_frame_layout.addWidget(QLabel('Imie'), 0, 1)
+        self.in_frame_layout.addWidget(QLabel('Nazwisko'), 0, 2)
+        self.in_frame_layout.addWidget(QLabel('Data ostatniej hospitacji'), 0, 3)
+
+        row = 1
+        for i in range(len(data)):
+            button_list.append(QPushButton('Dodaj'))
+
+        for result in data:
+            self.in_frame_layout.addWidget(QLabel(str(result['ID'])), row, 0)
+            self.in_frame_layout.addWidget(QLabel(str(result['Imie'])), row, 1)
+            self.in_frame_layout.addWidget(QLabel(str(result['Nazwisko'])), row, 2)
+            self.in_frame_layout.addWidget(QLabel(str(result['Data ostatniej hospitacji'])), row, 3)
+            button_list[row - 1].clicked.connect(partial(self.add_classes, employee=result))
+            self.in_frame_layout.addWidget(button_list[row - 1], row, 4)
+            row += 1
+
+        btn_cancellation.clicked.connect(self.develop_schedule)
+        self.in_frame_layout.addWidget(btn_cancellation, row, 4)
+
+    def add_classes(self, employee):
+        self.clear_in_frame_layout()
+        path_to_json = 'Classes/'
+        data = self.read_data(path_to_json)
+        button_list = []
+        frame = QFrame()
+        frame.setStyleSheet('border: 1px solid black')
+        btn_cancellation = QPushButton("Anuluj")
+
+        self.in_frame_layout.addWidget(frame, 0, 0, 1, 5)
+        self.in_frame_layout.addWidget(QLabel('Pracownik'), 0, 0)
+        self.in_frame_layout.addWidget(QLabel('Kod grupy'), 0, 1)
+        self.in_frame_layout.addWidget(QLabel('Nazwa'), 0, 2)
+        self.in_frame_layout.addWidget(QLabel('Miejsce i termin zajec'), 0, 3)
+
+        row = 1
+        for i in range(len(data)):
+            button_list.append(QPushButton('Dodaj'))
+
+        for result in data:
+            print("Classes:"+ result["PracownikID"])
+            print(employee)
+            print(employee["ID"])
+            print(str(result["PracownikID"]) == str(employee["ID"]))
+            if str(result["PracownikID"]) == str(employee["ID"]):
+                employee_name = employee["Imie"] + " " + employee["Nazwisko"]
+                self.in_frame_layout.addWidget(QLabel(str(employee_name)), row, 0)
+                self.in_frame_layout.addWidget(QLabel(str(result['Kod grupy'])), row, 1)
+                self.in_frame_layout.addWidget(QLabel(str(result['Nazwa'])), row, 2)
+                self.in_frame_layout.addWidget(QLabel(str(result['Miejsce i termin zajec'])), row, 3)
+                button_list[row - 1].clicked.connect(partial(self.add_to_schedule, employee=employee, classes=result))
+                self.in_frame_layout.addWidget(button_list[row - 1], row, 4)
+                row += 1
+
+        btn_cancellation.clicked.connect(self.add_employee)
+        self.in_frame_layout.addWidget(btn_cancellation, row, 4, 10, 1)
 
     def develop_schedule(self):
         self.clear_in_frame_layout()
+
+        btn_add = QPushButton("Dodaj")
+        btn_accept = QPushButton("Zatwierdź")
+        btn_cancellation = QPushButton("Anuluj")
+        button_list = []
+
+        frame = QFrame()
+        frame.setStyleSheet('border: 1px solid black')
+
+        self.in_frame_layout.addWidget(frame, 0, 0, 1, 5)
+        self.in_frame_layout.addWidget(QLabel('Data ostatniej hospitacji'), 0, 0)
+        self.in_frame_layout.addWidget(QLabel('Hospitowany'), 0, 1)
+        self.in_frame_layout.addWidget(QLabel('Nazwa kursu'), 0, 2)
+        self.in_frame_layout.addWidget(QLabel('Kod grupy'), 0, 3)
+
+        data = []
+        file_path = 'Schedules/schedule_temp.json'
+
+        with open(file_path) as schedule_temp:
+            data_from_file = json.load(schedule_temp)
+            data = data_from_file
+
+        row = 1
+        for i in range(len(data)):
+            button_list.append(QPushButton('Usuń'))
+
+        for result in data:
+            self.in_frame_layout.addWidget(QLabel(str(result['Data ostatniej hospitacji'])), row, 0)
+            self.in_frame_layout.addWidget(QLabel(str(result['Hospitowany'])), row, 1)
+            self.in_frame_layout.addWidget(QLabel(str(result['Nazwa kursu'])), row, 2)
+            self.in_frame_layout.addWidget(QLabel(str(result['Kod grupy'])), row, 3)
+            button_list[row - 1].clicked.connect(lambda:self.remove_from_schedule( result))
+            self.in_frame_layout.addWidget(button_list[row - 1], row, 4)
+            row += 1
+
+        self.in_frame_layout.addWidget(btn_add, row, 0, 10, 1)
+        self.in_frame_layout.addWidget(btn_accept, row, 3, 10, 1)
+        self.in_frame_layout.addWidget(btn_cancellation, row, 4, 10, 1)
+        btn_accept.clicked.connect(self.accept_schedule)
+        btn_add.clicked.connect(self.add_employee)
+        btn_cancellation.clicked.connect(self.clear_in_frame_layout)
 
 
 
