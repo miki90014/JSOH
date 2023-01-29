@@ -30,6 +30,7 @@ for i in range(1, 31):
         'Nr hospitacji': 'unknown',
         'Prowadzący zajęcia/Jednostka organizacyjna': people_in_dir[liczba]['Nazwisko'] + ' ' + people_in_dir[liczba]
                                                                                                              ['Imie'],
+        'Id Prowadzącego': people_in_dir[liczba]["Id"],
         "Nazwa kursu/kierunek studiów": lista_kierunkow[randint(0, 8)],
         "Kod kursu": "IST-023",
         "Forma dydaktyczna": f'{"wykład" if randint(0, 1) == 0 else "inna"}',

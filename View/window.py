@@ -297,6 +297,7 @@ class MainWindow(QMainWindow):
 
         basic_info_for_save = {
             'Prowadzący zajęcia/Jednostka organizacyjna': result["Prowadzący zajęcia/Jednostka organizacyjna"],
+            'Id Prowadzącego': result["Id Prowadzącego"],
             'Nazwa kursu/kierunek studiów': result["Nazwa kursu/kierunek studiów"],
             'Kod kursu': result["Kod kursu"],
             'Forma dydaktyczna': result["Forma dydaktyczna"],
