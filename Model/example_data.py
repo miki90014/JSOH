@@ -140,22 +140,25 @@ def send_accepted_protocol(filename):
 
 def avg(number_list):
     number_list = [i for i in number_list if i != 0]
+    if len(number_list) == 0:
+        return 0
     average = sum(number_list)/len(number_list)
     return round(average, 2)
 
 
 def sorter(item):
     sort_by = item[1]['Ocena merytoryczna']['Ocena końcowa']
-    if sort_by == 'negatywna':
-        return 1
-    elif sort_by == 'dostateczna':
-        return 2
-    elif sort_by == 'dobra':
-        return 3
+    if sort_by == 'wzorowa':
+        return 5
     elif sort_by == 'bardzo dobra':
         return 4
-    else:
-        return 5
+    elif sort_by == 'dobra':
+        return 3
+    elif sort_by == 'dostateczna':
+        return 2
+    elif sort_by == 'negatywna':
+        return 1
+    return 0
 
 
 def save_protocol_to_file(result, basic_info, formal_mark, substansive_mark):
@@ -234,10 +237,10 @@ def sort_protocols_list(order: str, order_by: str, protocols_to_sort: dict, numb
         else:
             :return: protocols sorted and filtered according to parameters
     """
-    if order == 'Brak':
-        return protocols_to_sort
     if number != 'Brak':
         protocols_to_sort = filter_list(protocols_to_sort, number)
+    if order == 'Brak':
+        return protocols_to_sort
     order = False if order == 'Rosnąco' else True
     if order_by == 'nr Protokołu':
         sorted_protocols = sorted(protocols_to_sort.items(),

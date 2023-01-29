@@ -638,9 +638,15 @@ class MainWindow(QMainWindow):
                 self.in_frame_layout.itemAt(i).widget().setParent(None)
         row = 2
 
+        if len(sorted_protocol_list) == 0:
+            self.in_frame_layout.addWidget(QLabel("Wystąpił błąd, brak aktualnie dostępnych protokołów hospitacji"))
+            return False
+
         for number, protocol in sorted_protocol_list.items():
             self.in_frame_layout.addWidget(QLabel(number), row, 0)
             self.in_frame_layout.addWidget(QLabel(protocol['Prowadzący zajęcia/Jednostka organizacyjna']), row, 1)
             self.in_frame_layout.addWidget(QLabel(protocol['Data otrzymania']), row, 2)
             self.in_frame_layout.addWidget(QLabel(protocol['Ocena merytoryczna']['Ocena końcowa']), row, 3)
             row += 1
+
+        return True
