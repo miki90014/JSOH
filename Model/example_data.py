@@ -6,6 +6,9 @@ from datetime import date, datetime, time
 from random import randrange, seed, randint
 from PyQt6.QtWidgets import *
 
+from Const.const import PROTOCOLS_ACCEPTED_DIR, PROTOCOLS_APPEAL_DIR, STATUS_ACCEPTED, STATUS_TO_ACCEPT, \
+    STATUS_IN_APPEAL
+
 
 class Protocol:
     def __init__(self):
@@ -29,34 +32,44 @@ class ProtocolResult:
         self.path_to_file = filename
 
         f = open(filename, encoding="utf-8")
+        try:
+            data = json.load(f)
 
-        data = json.load(f)
-
-        self.id = data["Nr protokołu"]
-        self.received_date = data["Data otrzymania"]
-        self.status = data["Status protokołu"]
-        self.accepted_date = data["Data akceptacji"]
-        if data["Status protokołu"] == "Wypełniony":
-            self.status = 'Do zaakceptowania'
-        if data["Data akceptacji"] == "":
-            self.accepted_date = '---'
-
+            self.id = data["Nr protokołu"]
+            self.received_date = data["Data otrzymania"]
+            self.status = data["Status protokołu"]
+            self.accepted_date = data["Data akceptacji"]
+            if data["Status protokołu"] == "Wypełniony":
+                self.status = STATUS_TO_ACCEPT
+            if data["Data akceptacji"] == "":
+                self.accepted_date = '---'
+        except:
+            self.id = "Niepoprawny format pliku"
+            self.received_date = ""
+            self.accepted_date = ""
+            self.status = ""
         f.close()
 
     def reload_data(self):
 
         f = open(self.path_to_file, encoding="utf-8")
 
-        data = json.load(f)
+        try:
+            data = json.load(f)
 
-        self.id = data["Nr protokołu"]
-        self.received_date = data["Data otrzymania"]
-        self.status = data["Status protokołu"]
-        self.accepted_date = data["Data akceptacji"]
-        if data["Status protokołu"] == "Wypełniony":
-            self.status = 'Do zaakceptowania'
-        if data["Data akceptacji"] == "":
-            self.accepted_date = '---'
+            self.id = data["Nr protokołu"]
+            self.received_date = data["Data otrzymania"]
+            self.status = data["Status protokołu"]
+            self.accepted_date = data["Data akceptacji"]
+            if data["Status protokołu"] == "Wypełniony":
+                self.status = STATUS_TO_ACCEPT
+            if data["Data akceptacji"] == "":
+                self.accepted_date = '---'
+        except:
+            self.id = "Niepoprawny format pliku"
+            self.received_date = ""
+            self.accepted_date = ""
+            self.status = ""
 
         f.close()
 
@@ -68,6 +81,7 @@ class ProtocolResultList:
             self.list.append(ProtocolResult(os.getcwd() + "\\Protocols" + str(workerid)+"\\"+filename))
 
     def get_protocol_by_id(self, i):
+        print(i)
         for protocol in self.list:
             if protocol.id == i:
                 return protocol
@@ -81,13 +95,13 @@ class ProtocolResultList:
 
 
 def print_results(result):
-    path = os.getcwd() + "\\ProtocolsAccepted"
+    path = os.getcwd() + PROTOCOLS_ACCEPTED_DIR
     is_exist = os.path.exists(path)
     if not is_exist:
         os.makedirs(path)
         print("The new directory is created!")
     filename = os.path.join("ProtocolsAccepted\\", "accepted_protocol")
-    filename += "_" + str(result.id) + ".txt"
+    filename += "_" + str(result.id) + ".json"
     with open(result.path_to_file, 'r', encoding="utf-8") as firstfile, open(filename, 'w', encoding="utf-8") as secondfile:
         for line in firstfile:
             secondfile.write(line)
@@ -99,7 +113,7 @@ def print_results(result):
     f = open(filename, "w", encoding="utf-8")
     string = {"Podpis":""}
     data["Nr akceptacji"] = result.id
-    data["Status protokołu"] = "Zaakceptowany"
+    data["Status protokołu"] = STATUS_ACCEPTED
     data["Data akceptacji"] = str(date.today())
     data.update(string)
     json.dump(data, f, ensure_ascii=False, indent=4)
@@ -114,23 +128,23 @@ def create_appeal_from_protocol(text, result):
     f.close()
 
     f = open(result.path_to_file, "w", encoding="utf-8")
-    data["Status protokołu"] = "W trakcie odwołania"
+    data["Status protokołu"] = STATUS_IN_APPEAL
     data["Nr odwołania"] = result.id
     json.dump(data, f, ensure_ascii=False, indent=4)
     f.close()
 
-    path = os.getcwd() + "\\ProtocolsAppeal"
+    path = os.getcwd() + PROTOCOLS_APPEAL_DIR
     is_exist = os.path.exists(path)
     if not is_exist:
         os.makedirs(path)
-        print("The new directory is created!")
     filename = os.path.join("ProtocolsAppeal\\", "appeal_from_protocol")
-    filename += "_" + str(result.id) + ".txt"
+    filename += "_" + str(result.id) + ".json"
     f = open(filename, "w")
-    f.write("ODWOŁANIE WYNIKU PROTOKOŁU\n")
-    f.write("Id Protokołu: {}".format(result.id)+"\n")
-    f.write("Treść Odwołania: {}".format(text)+"\n")
-    f.write("\nData odowłania: " + str(date.today()))
+    x = {}
+    x["Id Protokołu"] = result.id
+    x["Treść Odwołania"] = text
+    x["Data odowłania"] = str(date.today())
+    json.dump(x, f, ensure_ascii=False, indent=4)
     f.close()
 
 

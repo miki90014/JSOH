@@ -217,7 +217,7 @@ class MainWindow(QMainWindow):
         f.close()
         self.in_frame_layout.addWidget(btn_back, 0, 3)
 
-        if result.status == 'Do zaakceptowania':
+        if result.status == STATUS_TO_ACCEPT:
             answer_results = QPushButton('Odpowiedz na wyniki')
             answer_results.clicked.connect(lambda: self.answer_results(result))
             self.in_frame_layout.addWidget(answer_results, 0, 3)
@@ -513,7 +513,7 @@ class MainWindow(QMainWindow):
         data = json.load(f)
         f.close()
         f = open(path, "w", encoding="utf-8")
-        data["Status protokołu"] = "Zaakceptowany"
+        data["Status protokołu"] = STATUS_ACCEPTED
         data["Nr akceptacji"] = data["Nr protokołu"]
         data["Data akceptacji"] = str(date.today())
         json.dump(data, f, ensure_ascii=False, indent=4)
