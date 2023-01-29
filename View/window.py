@@ -1,5 +1,6 @@
 import copy
 import os
+import json
 import sys
 from datetime import date
 from functools import partial
@@ -84,7 +85,7 @@ class MainWindow(QMainWindow):
         self.right_side_menu = QVBoxLayout()
 
         self.right_side_menu_button_list = [QPushButton('Przegląd zaplanowanych hospitacji'), QPushButton('Hospitacje'),
-                                            QPushButton('Wgląd do wyników hospitacji'), QPushButton('Ocena pracowników')]
+                                            QPushButton('Wgląd do wyników hospitacji'), QPushButton('Ocena pracowników'), QPushButton('Wykaz zajęć')]
 
         self.in_frame_layout = QGridLayout()
 
@@ -100,7 +101,7 @@ class MainWindow(QMainWindow):
             self.right_side_menu.addWidget(button)
 
         login_list = QComboBox()
-        login_list.addItems(['Hospitujący', 'Hospitowany', 'Dziekan'])
+        login_list.addItems(['Hospitujący', 'Hospitowany', 'Dziekan', 'Dyrektor Filli'])
         login_list.currentIndexChanged.connect(self.on_login_list_change)
 
         frame = QFrame()
@@ -131,8 +132,10 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(widget)
 
         # example of how connection will be working
+        self.right_side_menu_button_list[4].clicked.connect(self.develop_schedule)
         self.right_side_menu_button_list[2].clicked.connect(self.view_protocol_results)
         self.right_side_menu_button_list[1].clicked.connect(self.view_protocols_to_fill)
+        self.right_side_menu_button_list[0].clicked.connect(self.view_scheduled_inspection)
 
         self.hide_all_right_side_menu_button_list()
         self.right_side_menu_button_list[0].show()
@@ -147,12 +150,15 @@ class MainWindow(QMainWindow):
             self.right_side_menu_button_list[2].show()
         if value == 2:
             self.right_side_menu_button_list[3].show()
+        if value == 3:
+            self.right_side_menu_button_list[4].show()
 
     def hide_all_right_side_menu_button_list(self):
         self.right_side_menu_button_list[0].hide()
         self.right_side_menu_button_list[1].hide()
         self.right_side_menu_button_list[2].hide()
         self.right_side_menu_button_list[3].hide()
+        self.right_side_menu_button_list[4].hide()
 
     def clear_in_frame_layout(self):
         for i in reversed(range(self.in_frame_layout.count())):
@@ -610,4 +616,54 @@ class MainWindow(QMainWindow):
         self.clear_in_frame_layout()
         self.protocol_result_list.list[self.protocol_result_list.get_index_by_id(result.id)].status = 2
         create_appeal_from_protocol(text_editor.toPlainText(), result)
+
+    def read_scheduled_inspections(self):
+        inspections_data = []
+        path_to_json = 'Inspections/'
+        json_files = [pos_json for pos_json in os.listdir(path_to_json) if pos_json.endswith('.json')]
+        for file in json_files:
+            data = json.load(open(path_to_json + "/" + file))
+            inspections_data.append(data)
+
+        return inspections_data
+
+    def view_scheduled_inspection(self):
+        self.clear_in_frame_layout()
+        data = self.read_scheduled_inspections()
+        frame = QFrame()
+        frame.setStyleSheet('border: 1px solid black')
+
+        self.in_frame_layout.addWidget(frame, 0, 0, 1, 8)
+        self.in_frame_layout.addWidget(QLabel('Data hospitacji'), 0, 0)
+        self.in_frame_layout.addWidget(QLabel('Hospitowany'), 0, 1)
+        self.in_frame_layout.addWidget(QLabel('Nazwa kursu'), 0, 2)
+        self.in_frame_layout.addWidget(QLabel('Kod kursu'), 0, 3)
+        self.in_frame_layout.addWidget(QLabel('Liczba osób'), 0, 4)
+        self.in_frame_layout.addWidget(QLabel('Miejsce i termin'), 0, 5)
+        self.in_frame_layout.addWidget(QLabel('Zespół hospitujący'), 0, 6)
+        self.in_frame_layout.addWidget(QLabel('Status'), 0, 7)
+
+        row = 1
+
+        for result in data:
+            self.in_frame_layout.addWidget(frame, 0, 0, 1, 8)
+            self.in_frame_layout.addWidget(QLabel(str(result['Data hospitacji'])), row, 0)
+            self.in_frame_layout.addWidget(QLabel(str(result['Hospitowany'])), row, 1)
+            self.in_frame_layout.addWidget(QLabel(str(result['Nazwa kursu'])), row, 2)
+            self.in_frame_layout.addWidget(QLabel(str(result['Kod kursu'])), row, 3)
+            self.in_frame_layout.addWidget(QLabel(str(result['Liczba osob'])), row, 4)
+            self.in_frame_layout.addWidget(QLabel(str(result['Miejsce i termin zajec'])), row, 5)
+            team_members = result['Zespol hospitujacy']
+            team = ''
+            for member in team_members:
+                team += member +", "
+            self.in_frame_layout.addWidget(QLabel(str(team[:-2])), row, 6)
+            self.in_frame_layout.addWidget(QLabel(str(result['Status'])), row, 7)
+            row += 1
+
+
+    def develop_schedule(self):
+        self.clear_in_frame_layout()
+
+
 
