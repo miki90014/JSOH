@@ -663,12 +663,12 @@ class MainWindow(QMainWindow):
         self.in_frame_layout.addWidget(btn_cancellation, row, 7)
         btn_cancellation.clicked.connect(self.clear_in_frame_layout)
 
-    def add_to_schedule(self, employee, classes):
+    def add_to_schedule(self, employee, classes, file_path='Schedules/schedule_temp.json'):
         self.clear_in_frame_layout()
         data = {"Data ostatniej hospitacji":employee["Data ostatniej hospitacji"],"Hospitowany":employee["Imie"] + " " + employee["Nazwisko"],"Nazwa kursu":classes["Nazwa"],"Kod grupy":classes["Kod grupy"]}
 
         list_obj = []
-        file_path = 'Schedules/schedule_temp.json'
+        #file_path = 'Schedules/schedule_temp.json'
 
         with open(file_path) as schedule_temp:
             data_from_file = json.load(schedule_temp)
@@ -689,11 +689,11 @@ class MainWindow(QMainWindow):
                 btn_close.clicked.connect(self.develop_schedule)
                 self.in_frame_layout.addWidget(btn_close, 1, 0)
 
-    def remove_from_schedule(self, data):
+    def remove_from_schedule(self, data, file_path = 'Schedules/schedule_temp.json'):
         self.clear_in_frame_layout()
 
         list_obj = []
-        file_path = 'Schedules/schedule_temp.json'
+        #file_path = 'Schedules/schedule_temp.json'
 
         with open(file_path) as schedule_temp:
             data_from_file = json.load(schedule_temp)
