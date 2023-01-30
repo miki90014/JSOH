@@ -1,0 +1,11 @@
+{
+"ID hospitacji":"003",
+"Data hospitacji":"03.03.2023",
+ "Hospitowany":"Radek Baranowski",
+"Nazwa kursu":"Programowanie system. webowych",
+"Kod kursu":"K01-79a",
+"Status":"Zaplanowana",
+"Liczba osob":40,
+"Miejsce i termin zajec":"wt 15:00 A-2 s14",
+"Zespol hospitujacy":[ "Maciej Nowak", "Anna Lis" ]
+}

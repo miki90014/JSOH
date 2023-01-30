@@ -1,0 +1,11 @@
+{
+"ID hospitacji":"022",
+"Data hospitacji":"02.02.2023",
+ "Hospitowany":"Kacper Gajewska",
+"Nazwa kursu":"Bazy danych",
+"Kod kursu":"K01-79a",
+"Status":"W trakcie",
+"Liczba osob":16,
+"Miejsce i termin zajec":"wt 15:00 A-2 s14",
+"Zespol hospitujacy":[ "Maciej Nowak", "Anna Lis" ]
+}

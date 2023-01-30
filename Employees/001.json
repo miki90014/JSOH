@@ -1,0 +1,12 @@
+{
+"ID":"001",
+"Typ pracownika":null,
+"Imie": "Jan",
+"Nazwisko":"Kowalski",
+"Tytul":null,
+"Stanowisko":null,
+"Stopien naukowy":null,
+"Jednostka organizacyjna":null,
+ "Data ostatniej hospitacji":"2022-01-28",
+"CzyJestWHZ":0
+}
