@@ -86,7 +86,7 @@ class MainWindow(QMainWindow):
 
         self.right_side_menu_button_list = [QPushButton('Przegląd zaplanowanych hospitacji'), QPushButton('Hospitacje'),
                                             QPushButton('Wgląd do wyników hospitacji'),
-                                            QPushButton('Ocena pracowników')]
+                                            QPushButton('Ocena pracowników'), QPushButton('Wykaz zajęć')]
 
         self.in_frame_layout = QGridLayout()
 
