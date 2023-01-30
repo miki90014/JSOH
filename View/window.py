@@ -1,10 +1,5 @@
-import os
-import json
-from datetime import date, datetime
 from functools import partial
-
 from PyQt6.QtCore import QSize
-from PyQt6.QtWidgets import *
 from Model.example_data import *
 
 
