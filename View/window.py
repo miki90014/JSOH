@@ -1,3 +1,4 @@
+import os
 from functools import partial
 from PyQt6.QtCore import QSize
 from Model.example_data import *
@@ -230,7 +231,7 @@ class MainWindow(QMainWindow):
     def view_protocols_to_fill(self):
         self.clear_in_frame_layout()
 
-        protocols = load_unfilled_protocols()
+        protocols = load_unfilled_protocols(os.getcwd())
 
         button_list = []
 

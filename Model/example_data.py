@@ -140,10 +140,11 @@ def create_appeal_from_protocol(text, result):
     filename = os.path.join("ProtocolsAppeal\\", "appeal_from_protocol")
     filename += "_" + str(result.id) + ".json"
     f = open(filename, "w")
-    x = {}
-    x["Id Protokołu"] = result.id
-    x["Treść Odwołania"] = text
-    x["Data odowłania"] = str(date.today())
+    x = {
+        "Id Protokołu": result.id,
+        "Treść Odwołania": text,
+        "Data odowłania": str(date.today())
+    }
     json.dump(x, f, ensure_ascii=False, indent=4)
     f.close()
 
@@ -177,6 +178,8 @@ def sorter(item):
 
 def save_protocol_to_file(result, basic_info, formal_mark, substansive_mark):
     folder = os.getcwd() + '\\Protocols'
+    file_to_remove = os.getcwd() + '\\Protocols_unfilled\\protocol_' + result["Nr protokołu"] + '.json'
+    os.remove(file_to_remove)
     if not os.path.exists(folder):
         os.mkdir(folder)
 
@@ -283,9 +286,9 @@ def sort_protocols_list(order: str, order_by: str, protocols_to_sort: dict, numb
     return sorted_protocols
 
 
-def load_unfilled_protocols():
+def load_unfilled_protocols(root):
     protocols = []
-    path = f'{os.getcwd()}\\Protocols_unfilled'
+    path = f'{root}\\Protocols_unfilled'
     for r, d, f in os.walk(path):
         for file in f:
             if '.json' in file:
@@ -297,6 +300,9 @@ def load_unfilled_protocols():
 
     for protocol in protocols:
         with open(protocol, 'r', encoding='utf-8') as file:
-            protocol_number = os.path.basename(protocol).split('_')[1].split('.')[0]
-            protocols_in_dir[protocol_number] = json.load(file)
+            try:
+                protocol_number = os.path.basename(protocol).split('_')[1].split('.')[0]
+                protocols_in_dir[protocol_number] = json.load(file)
+            except IndexError:
+                print(f'The file{protocol} is not in a valid format')
     return protocols_in_dir
