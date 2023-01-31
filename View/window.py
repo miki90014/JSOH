@@ -526,8 +526,8 @@ class MainWindow(QMainWindow):
 
     def get_text_file(self, text_editor, btn_accept, path):
         file_name, _ = QFileDialog.getOpenFileName(self, 'Open Txt File', r"ProtocolsAccepted",
-                                                   "Text files (*.txt)")
-        if file_name.endswith('.txt'):
+                                                   "Text files (*.json)")
+        if file_name.endswith('.json'):
             with open(file_name, 'r', encoding="utf-8") as f:
                 data = f.read()
                 text_editor.setPlainText(data)
