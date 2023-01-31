@@ -1,70 +1,63 @@
 # JSOH
 
-Naszą "bazą danych" będzie folder `Database\`.
-`Database\` będzie się składało (jak na razie, aby podać przykład działania):
- - `protocols.csv` 
- - `workers.csv`
- - `accepted_protocols.csv`
- - `appeal_from_protocols.csv`
- - `auditing.csv`
+Wszelkie pliki będą przechowywane w formacie. 
+W podanych folderach znajdują się pliki odczytywane przez aplikacje:
+- `Classes\ `
+- `Employees\ `
+- `Inspections\ `
+- `Protocols\ `
+- `Protocols99\ `
+- `ProtocolsAccepted\ `
+- `ProtocolsAppeal\ `
+- `Schedules\ `
+- `TestData\ `
+- `TestFiles\ `
 
-Pliki te one przechowywać informacje które będziemy używać w aplikacji
+## Classes
 
-## protocols.csv
+W `Classes\ ` są przechowywane pliki z informacjami dotyczących zajęć.
+Nazwa pliku jest numerem `id` zajęć.
 
-Praktycznie przepisany diagram klasy `Protokół z hospitacji` poszerzony o kilka kluczy obcych.
-A dokładniej będzie się składać z następujących pól:
+## Employees
 
-**_NOTE:_**
-pamiętajcie o podanej kolejności - jeśli chcecie zmienić, wprowadźcie zmiany do `README.md` (lub jak chcecie dodać coś nowego)
+W `Employees\ ` są przechowywane pliki z informacjami dotyczącymi pracowników.
+Nazwa pliku jest numerem `id` pracownika.
 
-- **nr protokołu** - `klucz`
-- **nr hospitacji** - `klucz obcy`
-- **ocena końcowa**
-- **ocena merytoryczna**
-- **ocena formalna**
-- **wnioski i zalecenia**
-- **inne uwagi**
-- **forma zajęć** 
-- **środowisko** 
-- **kod kursu**
-- **nazwa**
-- **status protokołu**
-- **data otrzymania**
-- **nr akceptacji** - `klucz obcy` (puste jak nie ma akceptacji)
-- **nr odwołania** - `klucz obcy` (puste jak nie ma odwołania)
+## Inspection
 
-## workers.csv
+W `Inspection\ ` są przechowywane pliki z informacjami dotyczącymi hospitacji.
+Nazwa pliku jest numerem `id` hospitacji.
 
-Wszystkie pola co mamy w diagramie klas `Pracownik` + `klucz glowny` **nr pracownika** jako pierwsze pole, reszta kolejność z diagramu
+## Protocols
 
-## accepted_protocols.csv
+W `Protocols\ ` są przechowywane pliki z informacjami dotyczącymi protokołów.
+Nazwy plików są przyjęta z konwencją `protocol_x.json` gdzie `x` jest numerem `id` protokołu.
 
-Wszystkie pola co mamy w diagramie klas `Akceptacja protokołu hospitacji` + `klucz glowny` **nr akceptacji** jako pierwsze pole, reszta kolejność z diagramu
+## Protocols99
 
-## appeal_from_protocols.csv
+W `Protocols99\ ` są przechowywane pliki z informacjami dotyczącymi protokołów hospitowanego o numerze `id: 99`.
+Dla uproszczenia aplikacji, zostały one wygenerowane wcześniej. 
+Nazwy plików są przyjęta z konwencją `protocol_x.json` gdzie `x` jest numerem `id` protokołu.
 
-Wszystkie pola co mamy w diagramie klas `Akceptacja protokołu hospitacji` + `klucz glowny` **nr odowołania** jako pierwsze pole, reszta kolejność z diagramu
+## ProtocolsAccepted
 
-## auditing.csv
+W `ProtocolsAccepted\ ` są przechowywane pliki z informacjami dotyczącymi wszystkich protokołów zaakceptowanych.
+Jest to kopia protokołu rozszerzona o podpis. Jest to imitacja "podpisanych protokołów" (np. zeskanowanych dokumentów z odręcznym podpisem pracownika).
+Nazwy plików są przyjęta z konwencją `accepted_protocol_x.json` gdzie `x` jest numerem `id` protokołu.
 
-- **nr hospitacji** - `klucz główny`
-- **data hospitacji**
-- **status**
-- **nr pracownika** - `klucz obcy`, pracownik jako hospitujący
-- **nr zespołu hospitującego** - `klucz obcy`
-- **nr zajec** - `klucz obcy`
+## ProtocolsAppeal
 
-**_NOTE:_**
-Zakładam że w `zajęciach` będzie się znajdować klucz obcy `Pracownika` dla hospitowanego.
+W `ProtocolsAppeal\ ` są przechowywane pliki z informacjami dotyczącymi wszystkich odwołań. 
+Nazwy plików są przyjęta z konwencją `appeal_from_protocol_x.json` gdzie `x` jest numerem `id` protokołu.
 
-Mam nadzieję że te przykłady rozjaśniły jak będziemy pracować - dodajemy klucze obce i klucze główne do naszych diagramów.
-W kodzie natomaist trzeba będzie pomyśleć o klasach i nie wiem, czy będziemy je łączyć za pomocą "numerów" czy za pomocą refernecji, to jest do ustalenia.
-Same diagramy poprawię później tak aby wszystko się zgadzało z implementacją. Jak macie pytania to piszcie.  
+## Schedules
 
-Trzeba będzie też pomyśleć o wszystkich typach enum, czy też będziemy je przechowywać jako pliki czy może przeobimy je na constraint jak np. w Oracle z płcią Kocura:
-```
-CREATE TABLE Kocury (
-    imie VARCHAR2(15) CONSTRAINT kc_im_nn NOT NULL,
-    plec VARCHAR2(1) CONSTRAINT kc_pl_ch CHECK (plec IN ('D', 'M')),
-```
+W `Schedules\ ` są przechowywane pliki z informacjami dotyczącymi harmonogramu hospitacji.
+
+## TestData
+
+W `TestData\ ` są przechowywane pliki, które są wykorzystywane w testach jednostkowych zanjdujących się w pliku `test_ewa.py`
+
+## TestFiles
+
+W `TestData\ ` są przechowywane pliki, które są wykorzystywane w testach jednostkowych zanjdujących się w pliku `test_monika.py`

@@ -114,5 +114,3 @@ def test_create_appeal_from_protocol():
     assert data["Id Protokołu"] == protocol.id
     assert data["Treść Odwołania"] == "test"
     assert data["Data odowłania"] == str(date.today())
-
-# View testing
