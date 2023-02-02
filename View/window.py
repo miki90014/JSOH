@@ -136,6 +136,7 @@ class MainWindow(QMainWindow):
         self.right_side_menu_button_list[0].clicked.connect(self.view_scheduled_inspection)
         self.right_side_menu_button_list[2].clicked.connect(self.view_protocol_results)
         self.right_side_menu_button_list[1].clicked.connect(self.view_protocols_to_fill)
+        self.right_side_menu_button_list[3].clicked.connect(self.view_and_sort_protocols)
         self.right_side_menu_button_list[4].clicked.connect(self.develop_schedule)
 
         self.hide_all_right_side_menu_button_list()
